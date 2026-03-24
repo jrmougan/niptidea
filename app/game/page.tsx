@@ -2,15 +2,13 @@
 
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { LuBrain, LuSend, LuArrowLeft, LuDiamond, LuTimer, LuUsers, LuBox, LuLightbulb } from "react-icons/lu";
+import { LuBrain, LuSend, LuTimer, LuUsers, LuBox, LuLightbulb } from "react-icons/lu";
 import type { IconType } from "react-icons";
 import ChatMessage from "@/components/ChatMessage";
 import ResultScreen from "@/components/ResultScreen";
 import { MAX_ATTEMPTS, TAUNT_THRESHOLDS } from "@/lib/constants";
-
-const transport = new TextStreamChatTransport({ api: "/api/chat" });
 
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -57,12 +55,13 @@ async function fetchGameResponse(messages: { role: string; content: string }[]):
   return fullContent;
 }
 
-export default function GamePage() {
+function GameSession({ onRestart }: { onRestart: () => void }) {
+  const transport = useMemo(() => new TextStreamChatTransport({ api: "/api/chat" }), []);
+
   const [inputValue, setInputValue] = useState("");
   const [attempts, setAttempts] = useState(MAX_ATTEMPTS);
   const [gameOver, setGameOver] = useState<"win" | "lose" | null>(null);
   const [revealedConcept, setRevealedConcept] = useState<string>("");
-  const [isGuessMode, setIsGuessMode] = useState(false);
   const [isStarting, setIsStarting] = useState(true);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [idleSeconds, setIdleSeconds] = useState(0);
@@ -87,13 +86,6 @@ export default function GamePage() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  };
-
-  const resetTimer = () => {
-    stopTimer();
-    setElapsedSeconds(0);
-    setIdleSeconds(0);
-    finalTimeRef.current = 0;
   };
 
   const { messages, setMessages, sendMessage, status } = useChat({
@@ -134,17 +126,24 @@ export default function GamePage() {
       startTimer();
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setMessages]);
+  }, []);
 
   // Cleanup timer on unmount
   useEffect(() => () => stopTimer(), []);
+
+  // Restore focus to input after each AI response
+  useEffect(() => {
+    if (!isLoading && !isStarting && !gameOver) {
+      inputRef.current?.focus();
+    }
+  }, [isLoading, isStarting, gameOver]);
 
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, isStarting]);
 
-  // Inject taunts based on idle time (seconds since last message sent)
+  // Inject taunts based on idle time
   useEffect(() => {
     if (isStarting || gameOver) return;
 
@@ -187,34 +186,9 @@ export default function GamePage() {
     const msg = inputValue.trim();
     setInputValue("");
     setAttempts((prev) => prev - 1);
-    setIsGuessMode(false);
     setIdleSeconds(0);
     shownTauntsRef.current = new Set();
     sendMessage({ text: msg });
-  };
-
-  const handleRestart = () => {
-    resetTimer();
-    setAttempts(MAX_ATTEMPTS);
-    setGameOver(null);
-    setRevealedConcept("");
-    setIsGuessMode(false);
-    setIsStarting(true);
-    setInputValue("");
-    startedRef.current = false;
-    loseTriggeredRef.current = false;
-    shownTauntsRef.current = new Set();
-
-    const ts = Date.now();
-    fetchGameResponse([{ role: "user", content: "start_game" }]).then((intro) => {
-      setMessages([
-        { id: `msg-start-${ts}`, role: "user", parts: [{ type: "text", text: "start_game" }] },
-        { id: `msg-intro-${ts}`, role: "assistant", parts: [{ type: "text", text: intro }] },
-      ]);
-      setIsStarting(false);
-      startedRef.current = true;
-      startTimer();
-    });
   };
 
   if (gameOver) {
@@ -224,7 +198,7 @@ export default function GamePage() {
         concept={revealedConcept}
         attemptsUsed={MAX_ATTEMPTS - attempts}
         timeSeconds={finalTimeRef.current}
-        onRestart={handleRestart}
+        onRestart={onRestart}
       />
     );
   }
@@ -261,7 +235,7 @@ export default function GamePage() {
         </div>
 
         <button
-          onClick={handleRestart}
+          onClick={onRestart}
           className="px-3 py-1 border border-[#e05a2b] text-[#e05a2b] text-xs font-mono tracking-widest hover:bg-[#e05a2b] hover:text-[#141414] transition-all"
         >
           [ restart ]
@@ -335,12 +309,12 @@ export default function GamePage() {
       <div className="relative z-10 border-t border-[#2e2e2e] bg-[#141414] px-4 py-3">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <div className="flex-1 flex items-center gap-2 bg-[#1e1e1e] border border-[#2e2e2e] rounded-sm px-3 py-2 focus-within:border-[#26a69a] transition-colors">
-            <span className="text-[#555] text-xs select-none">{isGuessMode ? ">" : "//"}</span>
+            <span className="text-[#555] text-xs select-none">{"//"}</span>
             <input
               ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={isGuessMode ? "escribe tu respuesta exacta..." : "haz una pregunta de sí/no..."}
+              placeholder="pregunta o adivina..."
               disabled={isLoading || attempts === 0 || isStarting}
               className="flex-1 bg-transparent text-sm text-[#f0f0f0] placeholder-[#555] outline-none font-mono"
               autoFocus
@@ -354,20 +328,12 @@ export default function GamePage() {
             <LuSend size={14} />
           </button>
         </form>
-
-        <div className="mt-2 text-center">
-          <button
-            onClick={() => { setIsGuessMode(!isGuessMode); inputRef.current?.focus(); }}
-            disabled={isLoading || attempts === 0 || isStarting}
-            className="text-xs text-[#26a69a] hover:text-[#f0f0f0] transition-colors disabled:opacity-40 font-mono tracking-wide"
-          >
-            {isGuessMode
-              ? <><LuArrowLeft size={12} className="inline mr-1" />volver a preguntas</>
-              : <><LuDiamond size={12} className="inline mr-1" />adivinar()</>
-            }
-          </button>
-        </div>
       </div>
     </div>
   );
+}
+
+export default function GamePage() {
+  const [gameKey, setGameKey] = useState(0);
+  return <GameSession key={gameKey} onRestart={() => setGameKey((k) => k + 1)} />;
 }

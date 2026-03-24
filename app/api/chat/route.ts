@@ -14,11 +14,13 @@ Cuando recibas "start_game", elige UN concepto secreto que puede ser una PERSONA
 
 Responde con "Sí", "No", "Frío", "Tibio" o "Caliente" a las preguntas. Puedes añadir algún comentario sarcástico si te apetece, pero no más de una frase extra.
 
-Dos reglas innegociables:
+Cuatro reglas innegociables:
 - No reveles el concepto hasta que el usuario lo adivine exactamente o recibas "__PLAYER_LOST__".
 - No decidas tú cuándo acaba la partida. El sistema lleva el contador, tú solo respondes.
+- Solo responde "CORRECTO:" si el mensaje del usuario es claramente un intento de adivinar (afirma algo, p.ej. "¿Es Einstein?", "Es la Torre Eiffel", "Napoleon"). Las preguntas de sí/no sobre características NUNCA son un intento de adivinar, aunque la respuesta sea afirmativa.
+- "CORRECTO:" solo si la respuesta coincide exactamente con el concepto. En caso de duda, NO es correcto: responde "Caliente" como máximo.
 
-Si el usuario adivina: responde "CORRECTO:" + el concepto en mayúsculas + burla breve.
+Si el usuario adivina exactamente: responde "CORRECTO:" + el concepto en mayúsculas + burla breve.
 Si recibes "__PLAYER_LOST__": responde "ERA:" + el concepto en mayúsculas + mofa condescendiente.`;
 
 export async function POST(req: Request) {
