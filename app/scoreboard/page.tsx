@@ -91,7 +91,7 @@ export default async function ScoreboardPage() {
                   <span className={i === 0 ? "text-[#e05a2b]" : "text-[#888]"}>
                     {score.attempts}
                   </span>
-                  <span className="text-[#555]">/15</span>
+                  <span className="text-[#555]">/{MAX_ATTEMPTS}</span>
                 </span>
 
                 {/* Date */}

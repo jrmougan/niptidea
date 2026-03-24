@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { LuBrain, LuMessageCircle, LuTarget } from "react-icons/lu";
+import { MAX_ATTEMPTS } from "@/lib/constants";
 
 const steps = [
   { num: "01", icon: LuBrain,          text: "AI thinks of something" },
   { num: "02", icon: LuMessageCircle,  text: "You ask yes/no questions" },
-  { num: "03", icon: LuTarget,         text: "Guess before 15 questions run out" },
+  { num: "03", icon: LuTarget,         text: `Guess before ${MAX_ATTEMPTS} questions run out` },
 ];
 
 export default function Home() {

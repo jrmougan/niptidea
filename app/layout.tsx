@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { MAX_ATTEMPTS } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "NiP_t_aIdea — ¿Puedes adivinar lo que piensa la IA?",
-  description:
-    "Juego de adivinanza con IA sarcástica. Tienes 15 preguntas para descubrir el concepto secreto.",
+  description: `Juego de adivinanza con IA sarcástica. Tienes ${MAX_ATTEMPTS} preguntas para descubrir el concepto secreto.`,
 };
 
 export default function RootLayout({
