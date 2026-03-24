@@ -15,7 +15,8 @@ function getTextContent(message: UIMessage): string {
 
 export default function ChatMessage({ message }: ChatMessageProps) {
   const isAI = message.role === "assistant";
-  const text = getTextContent(message);
+  const raw = getTextContent(message);
+  const text = raw.replace(/CATEGOR[ÍI]A:\s*\w+\s*/gi, "").trim();
 
   if (isAI) {
     return (

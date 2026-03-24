@@ -4,7 +4,8 @@ import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { LuBrain, LuSend, LuArrowLeft, LuDiamond, LuTimer } from "react-icons/lu";
+import { LuBrain, LuSend, LuArrowLeft, LuDiamond, LuTimer, LuUsers, LuBox, LuLightbulb } from "react-icons/lu";
+import type { IconType } from "react-icons";
 import ChatMessage from "@/components/ChatMessage";
 import ResultScreen from "@/components/ResultScreen";
 import { MAX_ATTEMPTS, TAUNT_THRESHOLDS } from "@/lib/constants";
@@ -15,6 +16,23 @@ function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
   const s = (seconds % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
+}
+
+const CATEGORY_ICONS: Record<string, IconType> = {
+  persona: LuUsers,
+  objeto: LuBox,
+  concepto: LuLightbulb,
+};
+
+function parseCategory(messages: ReturnType<typeof Array.prototype.filter>): string | null {
+  for (const msg of messages) {
+    if (msg.role !== "assistant") continue;
+    const textPart = msg.parts?.find((p: { type: string }) => p.type === "text");
+    const text: string = textPart && "text" in textPart ? textPart.text : "";
+    const match = text.match(/CATEGOR[ÍI]A:\s*(\w+)/i);
+    if (match) return match[1];
+  }
+  return null;
 }
 
 async function fetchGameResponse(messages: { role: string; content: string }[]): Promise<string> {
@@ -47,6 +65,7 @@ export default function GamePage() {
   const [isGuessMode, setIsGuessMode] = useState(false);
   const [isStarting, setIsStarting] = useState(true);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [idleSeconds, setIdleSeconds] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const startedRef = useRef(false);
@@ -59,6 +78,7 @@ export default function GamePage() {
     if (timerRef.current) return;
     timerRef.current = setInterval(() => {
       setElapsedSeconds((s) => s + 1);
+      setIdleSeconds((s) => s + 1);
     }, 1000);
   };
 
@@ -72,6 +92,7 @@ export default function GamePage() {
   const resetTimer = () => {
     stopTimer();
     setElapsedSeconds(0);
+    setIdleSeconds(0);
     finalTimeRef.current = 0;
   };
 
@@ -123,24 +144,24 @@ export default function GamePage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, isStarting]);
 
-  // Inject taunts at time thresholds
+  // Inject taunts based on idle time (seconds since last message sent)
   useEffect(() => {
     if (isStarting || gameOver) return;
 
     for (const taunt of TAUNT_THRESHOLDS) {
-      if (elapsedSeconds >= taunt.seconds && !shownTauntsRef.current.has(taunt.seconds)) {
+      if (idleSeconds >= taunt.seconds && !shownTauntsRef.current.has(taunt.seconds)) {
         shownTauntsRef.current.add(taunt.seconds);
         setMessages((prev) => [
           ...prev,
           {
-            id: `taunt-${taunt.seconds}`,
+            id: `taunt-${taunt.seconds}-${Date.now()}`,
             role: "assistant" as const,
             parts: [{ type: "text" as const, text: taunt.message }],
           },
         ]);
       }
     }
-  }, [elapsedSeconds, isStarting, gameOver, setMessages]);
+  }, [idleSeconds, isStarting, gameOver, setMessages]);
 
   // Trigger lose when attempts hit 0
   useEffect(() => {
@@ -167,6 +188,8 @@ export default function GamePage() {
     setInputValue("");
     setAttempts((prev) => prev - 1);
     setIsGuessMode(false);
+    setIdleSeconds(0);
+    shownTauntsRef.current = new Set();
     sendMessage({ text: msg });
   };
 
@@ -244,6 +267,21 @@ export default function GamePage() {
           [ restart ]
         </button>
       </header>
+
+      {/* Category badge */}
+      {(() => {
+        const cat = parseCategory(messages);
+        if (!cat) return null;
+        const Icon = CATEGORY_ICONS[cat.toLowerCase()];
+        return (
+          <div className="relative z-10 flex justify-center py-2 border-b border-[#2e2e2e]/50">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#26a69a]/10 border border-[#26a69a]/30 text-[#26a69a] text-[11px] font-bold font-mono tracking-widest uppercase leading-none">
+              {Icon && <span className="flex items-center"><Icon size={11} /></span>}
+              <span>{cat}</span>
+            </span>
+          </div>
+        );
+      })()}
 
       {/* Messages */}
       <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4 space-y-3">
@@ -325,7 +363,7 @@ export default function GamePage() {
           >
             {isGuessMode
               ? <><LuArrowLeft size={12} className="inline mr-1" />volver a preguntas</>
-              : <><LuDiamond size={12} className="inline mr-1" />make a guess()</>
+              : <><LuDiamond size={12} className="inline mr-1" />adivinar()</>
             }
           </button>
         </div>

@@ -3,9 +3,9 @@ import { LuBrain, LuMessageCircle, LuTarget, LuTrophy } from "react-icons/lu";
 import { MAX_ATTEMPTS } from "@/lib/constants";
 
 const steps = [
-  { num: "01", icon: LuBrain,          text: "AI thinks of something" },
-  { num: "02", icon: LuMessageCircle,  text: "You ask yes/no questions" },
-  { num: "03", icon: LuTarget,         text: `Guess before ${MAX_ATTEMPTS} questions run out` },
+  { num: "01", icon: LuBrain,          text: "La IA piensa en algo" },
+  { num: "02", icon: LuMessageCircle,  text: "Haz preguntas de sí/no" },
+  { num: "03", icon: LuTarget,         text: `Adivínalo antes de agotar ${MAX_ATTEMPTS} preguntas` },
 ];
 
 export default function Home() {
@@ -33,7 +33,7 @@ export default function Home() {
             NiP_t_aIdea
           </h1>
           <p className="text-sm text-[#888] font-mono tracking-widest">
-            // can you guess what the AI is thinking?
+            // ¿puedes adivinar en qué está pensando la IA?
           </p>
         </div>
 
@@ -57,7 +57,7 @@ export default function Home() {
         {/* How to play */}
         <div className="mt-4 w-full">
           <p className="text-xs text-[#26a69a] tracking-[0.3em] uppercase mb-6 text-glow-teal">
-            HOW_TO_PLAY
+            CÓMO_JUGAR
           </p>
           <div className="grid grid-cols-3 gap-4">
             {steps.map(({ num, icon: Icon, text }) => (

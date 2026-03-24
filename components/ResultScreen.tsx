@@ -85,13 +85,13 @@ export default function ResultScreen({
 
         {/* Title */}
         <h1 className={`text-2xl font-bold font-mono tracking-wide ${isWin ? "text-[#f0f0f0]" : "text-[#e05a2b]"}`}>
-          {isWin ? "you_guessed_it()" : "game_over()"}
+          {isWin ? "lo_has_adivinado()" : "fin_del_juego()"}
         </h1>
 
         {/* Concept reveal */}
         <div className="w-full bg-[#1e1e1e] border border-[#2e2e2e] rounded-sm px-6 py-4">
           <p className="text-xs text-[#555] mb-2 font-mono">
-            {isWin ? "// the answer was..." : "// it was..."}
+            {isWin ? "// la respuesta era..." : "// era..."}
           </p>
           <p className="text-xl font-bold text-[#e05a2b] text-glow-orange uppercase font-mono">
             {concept || "???"}
@@ -120,7 +120,7 @@ export default function ResultScreen({
           <div className="bg-[#1e1e1e] border border-[#2e2e2e] rounded-sm px-3 py-3">
             <p className="text-[10px] text-[#555] mb-1 font-mono uppercase tracking-wider">resultado</p>
             <p className={`text-xl font-bold font-mono ${isWin ? "text-[#26a69a]" : "text-[#e05a2b]"}`}>
-              {isWin ? "WIN" : "LOSE"}
+              {isWin ? "GANADO" : "PERDIDO"}
             </p>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function ResultScreen({
             {saved === true ? (
               <div className="flex items-center justify-center gap-2 text-[#26a69a] font-mono text-sm">
                 <LuCheck size={14} />
-                <span>guardado en el scoreboard</span>
+                <span>guardado en la clasificación</span>
               </div>
             ) : saved === false ? (
               <div className="flex items-center justify-center gap-2 text-[#555] font-mono text-sm">
@@ -141,7 +141,7 @@ export default function ResultScreen({
             ) : (
               <>
                 <p className="text-[10px] text-[#26a69a] mb-3 font-mono uppercase tracking-wider">
-                  // enter your name
+                  // escribe tu nombre
                 </p>
                 <form onSubmit={handleSave} className="flex gap-2">
                   <input
@@ -157,7 +157,7 @@ export default function ResultScreen({
                     disabled={!name.trim() || saving}
                     className="px-4 py-2 bg-[#26a69a] text-[#141414] text-xs font-bold font-mono disabled:opacity-40 hover:bg-[#1a7a71] transition-colors"
                   >
-                    {saving ? "..." : "SAVE"}
+                    {saving ? "..." : "GUARDAR"}
                   </button>
                 </form>
               </>
@@ -171,13 +171,13 @@ export default function ResultScreen({
             onClick={onRestart}
             className="flex-1 py-3 bg-[#e05a2b] text-[#141414] text-sm font-bold font-mono tracking-wider hover:bg-[#c94e22] transition-colors"
           >
-            <LuRefreshCw size={14} className="inline mr-2" />play_again()
+            <LuRefreshCw size={14} className="inline mr-2" />jugar_de_nuevo()
           </button>
           <Link
             href="/scoreboard"
             className="flex-1 py-3 border border-[#2e2e2e] text-[#888] text-sm font-mono tracking-wider hover:border-[#26a69a] hover:text-[#26a69a] transition-all text-center"
           >
-            <LuTrophy size={14} className="inline mr-2" />scoreboard
+            <LuTrophy size={14} className="inline mr-2" />clasificación
           </Link>
         </div>
       </div>

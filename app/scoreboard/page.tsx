@@ -44,7 +44,7 @@ export default async function ScoreboardPage() {
         <div className="flex flex-col items-center gap-2">
           <LuTrophy size={40} className="text-[#e05a2b]" />
           <h1 className="text-3xl font-bold font-mono text-[#e05a2b] text-glow-orange tracking-wider">
-            HIGH_SCORES
+            CLASIFICACIÓN
           </h1>
           <p className="text-xs text-[#555] font-mono tracking-widest">
             {`// top ${SCOREBOARD_SIZE} — menos preguntas gana`}
@@ -125,7 +125,7 @@ export default async function ScoreboardPage() {
             href="/game"
             className="flex-1 py-3 bg-[#e05a2b] text-[#141414] text-sm font-bold font-mono tracking-wider hover:bg-[#c94e22] transition-colors text-center"
           >
-            <LuRefreshCw size={14} className="inline mr-2" />play_again()
+            <LuRefreshCw size={14} className="inline mr-2" />jugar_de_nuevo()
           </Link>
           <Link
             href="/"
