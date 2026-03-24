@@ -1,4 +1,5 @@
 import { db, type Score } from "@/lib/db";
+import { SCOREBOARD_SIZE, MAX_NAME_LENGTH } from "@/lib/constants";
 import { NextResponse } from "next/server";
 
 // Node.js runtime — better-sqlite3 needs native Node, not edge
@@ -11,7 +12,7 @@ export function GET() {
        FROM scores
        WHERE won = 1
        ORDER BY attempts ASC, created_at ASC
-       LIMIT 10`
+       LIMIT ${SCOREBOARD_SIZE}`
     )
     .all() as Score[];
 
@@ -25,13 +26,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const trimmedName = String(name).slice(0, 16).trim();
+  const trimmedName = String(name).slice(0, MAX_NAME_LENGTH).trim();
 
   // Run insert + prune atomically
   const upsert = db.transaction(() => {
     const count = (db.prepare(`SELECT COUNT(*) as n FROM scores WHERE won = 1`).get() as { n: number }).n;
 
-    if (count >= 10) {
+    if (count >= SCOREBOARD_SIZE) {
       const worst = db.prepare(
         `SELECT id, attempts FROM scores WHERE won = 1 ORDER BY attempts DESC, created_at DESC LIMIT 1`
       ).get() as { id: number; attempts: number } | undefined;

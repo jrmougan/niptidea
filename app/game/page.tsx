@@ -4,10 +4,10 @@ import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { LuBrain, LuSend, LuArrowLeft, LuDiamond, LuRefreshCw } from "react-icons/lu";
 import ChatMessage from "@/components/ChatMessage";
 import ResultScreen from "@/components/ResultScreen";
-
-const MAX_ATTEMPTS = 15;
+import { MAX_ATTEMPTS } from "@/lib/constants";
 
 // Singleton transport — must live outside the component to avoid re-instantiation on each render
 const transport = new TextStreamChatTransport({ api: "/api/chat" });
@@ -199,8 +199,8 @@ export default function GamePage() {
       <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {isStarting ? (
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#26a69a]/50 bg-[#1e1e1e] flex items-center justify-center text-sm">
-              🧠
+            <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#26a69a]/50 bg-[#1e1e1e] flex items-center justify-center text-[#26a69a]">
+              <LuBrain size={16} />
             </div>
             <div className="bg-[#1e1e1e] border border-[#2e2e2e] rounded-sm px-4 py-3 text-sm text-[#888]">
               <span className="cursor-blink">inicializando</span>
@@ -212,8 +212,8 @@ export default function GamePage() {
 
         {isLoading && (
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#26a69a]/50 bg-[#1e1e1e] flex items-center justify-center text-sm">
-              🧠
+            <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#26a69a]/50 bg-[#1e1e1e] flex items-center justify-center text-[#26a69a]">
+              <LuBrain size={16} />
             </div>
             <div className="bg-[#1e1e1e] border border-[#2e2e2e] rounded-sm px-4 py-3 text-sm text-[#888]">
               <span className="cursor-blink">pensando</span>
@@ -265,7 +265,7 @@ export default function GamePage() {
             disabled={isLoading || !inputValue.trim() || attempts === 0 || isStarting}
             className="px-4 py-2 bg-[#e05a2b] text-[#141414] text-xs font-bold font-mono tracking-wider disabled:opacity-40 hover:bg-[#c94e22] transition-colors"
           >
-            send →
+            <LuSend size={14} />
           </button>
         </form>
 
@@ -278,7 +278,10 @@ export default function GamePage() {
             disabled={isLoading || attempts === 0 || isStarting}
             className="text-xs text-[#26a69a] hover:text-[#f0f0f0] transition-colors disabled:opacity-40 font-mono tracking-wide"
           >
-            {isGuessMode ? "← volver a preguntas" : "◆ make a guess()"}
+            {isGuessMode
+              ? <><LuArrowLeft size={12} className="inline mr-1" />volver a preguntas</>
+              : <><LuDiamond size={12} className="inline mr-1" />make a guess()</>
+            }
           </button>
         </div>
       </div>

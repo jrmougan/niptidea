@@ -1,4 +1,5 @@
 import type { UIMessage } from "ai";
+import { LuBrain, LuUser } from "react-icons/lu";
 
 interface ChatMessageProps {
   message: UIMessage;
@@ -19,8 +20,8 @@ export default function ChatMessage({ message }: ChatMessageProps) {
   if (isAI) {
     return (
       <div className="flex items-start gap-3 max-w-[80%]">
-        <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#26a69a]/50 bg-[#1e1e1e] flex items-center justify-center text-sm">
-          🧠
+        <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#26a69a]/50 bg-[#1e1e1e] flex items-center justify-center text-[#26a69a]">
+          <LuBrain size={16} />
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-[10px] text-[#26a69a] font-mono">NiP_t_aIdea</span>
@@ -34,8 +35,8 @@ export default function ChatMessage({ message }: ChatMessageProps) {
 
   return (
     <div className="flex items-start gap-3 max-w-[80%] ml-auto flex-row-reverse">
-      <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#e05a2b]/30 bg-[#1e1e1e] flex items-center justify-center text-sm">
-        👤
+      <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#e05a2b]/30 bg-[#1e1e1e] flex items-center justify-center text-[#e05a2b]/60">
+        <LuUser size={16} />
       </div>
       <div className="flex flex-col gap-1 items-end">
         <span className="text-[10px] text-[#e05a2b]/70 font-mono">tú</span>

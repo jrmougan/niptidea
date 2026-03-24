@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { LuCheck, LuX, LuRefreshCw, LuTrophy, LuArrowLeft } from "react-icons/lu";
+import { MAX_ATTEMPTS, MAX_NAME_LENGTH, SCOREBOARD_SIZE } from "@/lib/constants";
 
 interface ResultScreenProps {
   result: "win" | "lose";
@@ -70,7 +72,7 @@ export default function ResultScreen({
               : "border-[#e05a2b] bg-[#e05a2b]/10 glow-orange"
           }`}
         >
-          {isWin ? "✓" : "✗"}
+          {isWin ? <LuCheck size={32} /> : <LuX size={32} />}
         </div>
 
         {/* Title */}
@@ -89,7 +91,7 @@ export default function ResultScreen({
           <p className="text-xs text-[#555] mt-2 font-mono">
             {isWin
               ? "Vaya, parece que no eres tan torpe después de todo."
-              : "Patético. Ni siquiera pudiste adivinarlo con 15 intentos."}
+              : `Patético. Ni siquiera pudiste adivinarlo con ${MAX_ATTEMPTS} intentos.`}
           </p>
         </div>
 
@@ -98,7 +100,7 @@ export default function ResultScreen({
           <div className="bg-[#1e1e1e] border border-[#2e2e2e] rounded-sm px-4 py-3">
             <p className="text-[10px] text-[#555] mb-1 font-mono uppercase tracking-wider">preguntas usadas</p>
             <p className="text-2xl font-bold text-[#f0f0f0] font-mono">
-              {String(attemptsUsed).padStart(2, "0")}/15
+              {String(attemptsUsed).padStart(2, "0")}/{MAX_ATTEMPTS}
             </p>
           </div>
           <div className="bg-[#1e1e1e] border border-[#2e2e2e] rounded-sm px-4 py-3">
@@ -114,13 +116,13 @@ export default function ResultScreen({
           <div className="w-full bg-[#1e1e1e] border border-[#26a69a]/30 rounded-sm px-4 py-4">
             {saved === true ? (
               <div className="flex items-center justify-center gap-2 text-[#26a69a] font-mono text-sm">
-                <span>✓</span>
+                <LuCheck size={14} />
                 <span>guardado en el scoreboard</span>
               </div>
             ) : saved === false ? (
               <div className="flex items-center justify-center gap-2 text-[#555] font-mono text-sm">
-                <span>✗</span>
-                <span>no alcanza para el top 10</span>
+                <LuX size={14} />
+                <span>no alcanza para el top {SCOREBOARD_SIZE}</span>
               </div>
             ) : (
               <>
@@ -131,7 +133,7 @@ export default function ResultScreen({
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    maxLength={16}
+                    maxLength={MAX_NAME_LENGTH}
                     placeholder="AAA"
                     autoFocus
                     className="flex-1 bg-[#141414] border border-[#2e2e2e] focus:border-[#26a69a] px-3 py-2 text-sm text-[#f0f0f0] font-mono outline-none tracking-widest uppercase transition-colors"
@@ -155,13 +157,13 @@ export default function ResultScreen({
             onClick={onRestart}
             className="flex-1 py-3 bg-[#e05a2b] text-[#141414] text-sm font-bold font-mono tracking-wider hover:bg-[#c94e22] transition-colors"
           >
-            ↺ play_again()
+            <LuRefreshCw size={14} className="inline mr-2" />play_again()
           </button>
           <Link
             href="/scoreboard"
             className="flex-1 py-3 border border-[#2e2e2e] text-[#888] text-sm font-mono tracking-wider hover:border-[#26a69a] hover:text-[#26a69a] transition-all text-center"
           >
-            ◆ scoreboard
+            <LuTrophy size={14} className="inline mr-2" />scoreboard
           </Link>
         </div>
       </div>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { Score } from "@/lib/db";
+import { LuTrophy, LuMedal, LuRefreshCw, LuArrowLeft } from "react-icons/lu";
+import { MAX_ATTEMPTS, SCOREBOARD_SIZE } from "@/lib/constants";
 
 async function getScores(): Promise<Score[]> {
   try {
@@ -12,7 +14,7 @@ async function getScores(): Promise<Score[]> {
   }
 }
 
-const MEDALS = ["🥇", "🥈", "🥉"];
+const MEDAL_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
 
 export default async function ScoreboardPage() {
   const scores = await getScores();
@@ -34,12 +36,12 @@ export default async function ScoreboardPage() {
       <div className="relative z-10 w-full max-w-lg flex flex-col items-center gap-8">
         {/* Header */}
         <div className="flex flex-col items-center gap-2">
-          <span className="text-4xl">🏆</span>
+          <LuTrophy size={40} className="text-[#e05a2b]" />
           <h1 className="text-3xl font-bold font-mono text-[#e05a2b] text-glow-orange tracking-wider">
             HIGH_SCORES
           </h1>
           <p className="text-xs text-[#555] font-mono tracking-widest">
-            // top 10 — menos preguntas gana
+            {`// top ${SCOREBOARD_SIZE} — menos preguntas gana`}
           </p>
         </div>
 
@@ -67,8 +69,10 @@ export default async function ScoreboardPage() {
                 }`}
               >
                 {/* Rank */}
-                <span className="font-mono text-sm self-center">
-                  {MEDALS[i] ?? (
+                <span className="font-mono text-sm self-center flex items-center justify-center">
+                  {i < 3 ? (
+                    <LuMedal size={18} style={{ color: MEDAL_COLORS[i] }} />
+                  ) : (
                     <span className="text-[#555]">{String(i + 1).padStart(2, "0")}</span>
                   )}
                 </span>
@@ -109,13 +113,13 @@ export default async function ScoreboardPage() {
             href="/game"
             className="flex-1 py-3 bg-[#e05a2b] text-[#141414] text-sm font-bold font-mono tracking-wider hover:bg-[#c94e22] transition-colors text-center"
           >
-            ↺ play_again()
+            <LuRefreshCw size={14} className="inline mr-2" />play_again()
           </Link>
           <Link
             href="/"
             className="flex-1 py-3 border border-[#2e2e2e] text-[#888] text-sm font-mono tracking-wider hover:border-[#555] hover:text-[#f0f0f0] transition-all text-center"
           >
-            ← inicio
+            <LuArrowLeft size={14} className="inline mr-2" />inicio
           </Link>
         </div>
       </div>
