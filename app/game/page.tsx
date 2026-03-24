@@ -9,6 +9,9 @@ import ResultScreen from "@/components/ResultScreen";
 
 const MAX_ATTEMPTS = 15;
 
+// Singleton transport — must live outside the component to avoid re-instantiation on each render
+const transport = new TextStreamChatTransport({ api: "/api/chat" });
+
 async function fetchGameResponse(messages: { role: string; content: string }[]): Promise<string> {
   const res = await fetch("/api/chat", {
     method: "POST",
@@ -44,7 +47,7 @@ export default function GamePage() {
   const loseTriggeredRef = useRef(false);
 
   const { messages, setMessages, sendMessage, status } = useChat({
-    transport: new TextStreamChatTransport({ api: "/api/chat" }),
+    transport,
     onFinish({ message }) {
       // Extract text from parts
       const textPart = message.parts?.find((p) => p.type === "text");

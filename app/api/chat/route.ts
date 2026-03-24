@@ -1,8 +1,9 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { convertToModelMessages, streamText, UIMessage } from "ai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import type { ModelMessage } from "ai";
 
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 export const runtime = "edge";
@@ -17,8 +18,9 @@ REGLAS DEL JUEGO:
 5. Cuando el usuario pierda (sin intentos), revela el concepto con burla condescendiente.
 
 PERSONALIDAD:
-- Eres brevísima. Máximo 1-2 frases por respuesta.
+- Eres breve. Máximo 2-3 frases por respuesta.
 - Sarcástica y ligeramente arrogante.
+- Ríete del jugador cuando falle.
 - Te aburre cuando las preguntas son demasiado obvias.
 - Te sorprendes (a regañadientes) si el usuario se acerca.
 - Cuando confirmas la respuesta correcta, incluye el texto exacto: "CORRECTO:" seguido del concepto en mayúsculas.
@@ -28,14 +30,26 @@ INICIO: Cuando el usuario diga "start_game", responde brevemente que has elegido
 
 export async function POST(req: Request) {
   const body = await req.json();
+  const rawMessages: unknown[] = body.messages ?? [];
 
-  // Support both plain {messages: CoreMessage[]} and UIMessage[] format
-  const messages: UIMessage[] = body.messages ?? [];
+  // UIMessages (from TextStreamChatTransport) have a `parts` array.
+  // Plain messages (from the manual fetch at game start) have a `content` string.
+  // Normalize everything to ModelMessage[] that streamText can consume.
+  let modelMessages: ModelMessage[];
 
-  const modelMessages = await convertToModelMessages(messages);
+  const isUIMessages = rawMessages.length > 0 && Array.isArray((rawMessages[0] as UIMessage).parts);
+
+  if (isUIMessages) {
+    modelMessages = await convertToModelMessages(rawMessages as UIMessage[]);
+  } else {
+    modelMessages = rawMessages.map((m) => {
+      const msg = m as { role: string; content: string };
+      return { role: msg.role as "user" | "assistant", content: msg.content } as ModelMessage;
+    });
+  }
 
   const result = streamText({
-    model: google("gemini-1.5-flash"),
+    model: openrouter("deepseek/deepseek-chat-v3-0324"),
     system: SYSTEM_PROMPT,
     messages: modelMessages,
   });
