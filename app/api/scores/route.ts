@@ -5,16 +5,16 @@ import { NextResponse } from "next/server";
 // Node.js runtime — better-sqlite3 needs native Node, not edge
 export const runtime = "nodejs";
 
-export function GET() {
+export function GET(): Response {
   const rows = db
     .prepare(
       `SELECT id, name, attempts, time_seconds, won, created_at
        FROM scores
        WHERE won = 1
        ORDER BY attempts ASC, time_seconds ASC, created_at ASC
-       LIMIT ${SCOREBOARD_SIZE}`
+       LIMIT ?`
     )
-    .all() as Score[];
+    .all(SCOREBOARD_SIZE) as Score[];
 
   return NextResponse.json(rows);
 }

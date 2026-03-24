@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg-primary:          #141414;
+  --color-bg-secondary:        #1e1e1e;
+  --color-bg-card:             #242424;
+  --color-bg-input:            #3a3a3a;
+  --color-accent-orange:       #e05a2b;
+  --color-accent-orange-hover: #c94e22;
+  --color-accent-teal:         #26a69a;
+  --color-accent-teal-dim:     #1a7a71;
+  --color-content-primary:     #f0f0f0;
+  --color-content-muted:       #888888;
+  --color-content-dim:         #555555;
+  --color-border-default:      #2e2e2e;
+}
+
 :root {
   --bg-primary: #141414;
   --bg-secondary: #1e1e1e;

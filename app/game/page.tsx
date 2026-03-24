@@ -1,20 +1,16 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { TextStreamChatTransport } from "ai";
+import { TextStreamChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { LuBrain, LuSend, LuTimer, LuUsers, LuBox, LuLightbulb } from "react-icons/lu";
 import type { IconType } from "react-icons";
 import ChatMessage from "@/components/ChatMessage";
 import ResultScreen from "@/components/ResultScreen";
-import { MAX_ATTEMPTS, TAUNT_THRESHOLDS } from "@/lib/constants";
+import { MAX_ATTEMPTS, TAUNT_THRESHOLDS, GAME_SIGNALS } from "@/lib/constants";
+import { formatTime, getMessageText } from "@/lib/utils";
 
-function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60).toString().padStart(2, "0");
-  const s = (seconds % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
-}
 
 const CATEGORY_ICONS: Record<string, IconType> = {
   persona: LuUsers,
@@ -22,12 +18,10 @@ const CATEGORY_ICONS: Record<string, IconType> = {
   concepto: LuLightbulb,
 };
 
-function parseCategory(messages: ReturnType<typeof Array.prototype.filter>): string | null {
+function parseCategory(messages: UIMessage[]): string | null {
   for (const msg of messages) {
     if (msg.role !== "assistant") continue;
-    const textPart = msg.parts?.find((p: { type: string }) => p.type === "text");
-    const text: string = textPart && "text" in textPart ? textPart.text : "";
-    const match = text.match(/CATEGOR[ÍI]A:\s*(\w+)/i);
+    const match = getMessageText(msg).match(/CATEGOR[ÍI]A:\s*(\w+)/i);
     if (match) return match[1];
   }
   return null;
@@ -40,19 +34,8 @@ async function fetchGameResponse(messages: { role: string; content: string }[]):
     body: JSON.stringify({ messages }),
   });
 
-  if (!res.ok || !res.body) return "";
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let fullContent = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    fullContent += decoder.decode(value, { stream: true });
-  }
-
-  return fullContent;
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.text();
 }
 
 function GameSession({ onRestart }: { onRestart: () => void }) {
@@ -91,8 +74,7 @@ function GameSession({ onRestart }: { onRestart: () => void }) {
   const { messages, setMessages, sendMessage, status } = useChat({
     transport,
     onFinish({ message }) {
-      const textPart = message.parts?.find((p) => p.type === "text");
-      const content = (textPart && "text" in textPart ? textPart.text : "") as string;
+      const content = getMessageText(message);
 
       if (/CORRECTO:/i.test(content)) {
         stopTimer();
@@ -117,14 +99,16 @@ function GameSession({ onRestart }: { onRestart: () => void }) {
     if (startedRef.current) return;
     startedRef.current = true;
 
-    fetchGameResponse([{ role: "user", content: "start_game" }]).then((intro) => {
-      setMessages([
-        { id: "msg-start", role: "user", parts: [{ type: "text", text: "start_game" }] },
-        { id: "msg-intro", role: "assistant", parts: [{ type: "text", text: intro }] },
-      ]);
-      setIsStarting(false);
-      startTimer();
-    });
+    fetchGameResponse([{ role: "user", content: GAME_SIGNALS.START }])
+      .then((intro) => {
+        setMessages([
+          { id: "msg-start", role: "user", parts: [{ type: "text", text: GAME_SIGNALS.START }] },
+          { id: "msg-intro", role: "assistant", parts: [{ type: "text", text: intro }] },
+        ]);
+        setIsStarting(false);
+        startTimer();
+      })
+      .catch(() => setIsStarting(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -172,9 +156,10 @@ function GameSession({ onRestart }: { onRestart: () => void }) {
       messages.length > 2
     ) {
       const lastMsg = messages[messages.length - 1];
-      if (lastMsg?.role === "assistant") {
+      const isRealAIResponse = lastMsg?.role === "assistant" && !lastMsg.id.startsWith("taunt-");
+      if (isRealAIResponse) {
         loseTriggeredRef.current = true;
-        sendMessage({ text: "__PLAYER_LOST__" });
+        sendMessage({ text: GAME_SIGNALS.PLAYER_LOST });
       }
     }
   }, [attempts, isLoading, messages, gameOver, sendMessage]);
@@ -205,30 +190,29 @@ function GameSession({ onRestart }: { onRestart: () => void }) {
 
   const progressPct = ((MAX_ATTEMPTS - attempts) / MAX_ATTEMPTS) * 100;
   const visibleMessages = messages.filter((m) => {
-    const textPart = m.parts?.find((p) => p.type === "text");
-    const text = textPart && "text" in textPart ? textPart.text : "";
-    return text !== "start_game" && text !== "__PLAYER_LOST__";
+    const text = getMessageText(m);
+    return text !== GAME_SIGNALS.START && text !== GAME_SIGNALS.PLAYER_LOST;
   });
 
   return (
-    <div className="flex flex-col h-screen bg-[#141414]">
+    <div className="flex flex-col h-screen bg-bg-primary">
       <div className="scanlines fixed inset-0 z-0 pointer-events-none" />
 
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between px-6 py-3 border-b border-[#2e2e2e] bg-[#141414]">
-        <Link href="/" className="text-[#e05a2b] font-bold text-sm tracking-wide text-glow-orange">
+      <header className="relative z-10 flex items-center justify-between px-6 py-3 border-b border-border-default bg-bg-primary">
+        <Link href="/" className="text-accent-orange font-bold text-sm tracking-wide text-glow-orange">
           NiP_t_aIdea
         </Link>
 
-        <div className="flex items-center gap-4 text-xs font-mono text-[#888]">
+        <div className="flex items-center gap-4 text-xs font-mono text-content-muted">
           <span>
             {"// q: "}
-            <span className="text-[#f0f0f0]">{String(MAX_ATTEMPTS - attempts).padStart(2, "0")}</span>
-            {"/"}<span className="text-[#e05a2b]">{MAX_ATTEMPTS}</span>
+            <span className="text-content-primary">{String(MAX_ATTEMPTS - attempts).padStart(2, "0")}</span>
+            {"/"}<span className="text-accent-orange">{MAX_ATTEMPTS}</span>
           </span>
           <span className="flex items-center gap-1">
-            <LuTimer size={12} className={elapsedSeconds > 0 && !isStarting ? "text-[#26a69a]" : "text-[#555]"} />
-            <span className={elapsedSeconds > 0 && !isStarting ? "text-[#26a69a]" : "text-[#555]"}>
+            <LuTimer size={12} className={elapsedSeconds > 0 && !isStarting ? "text-accent-teal" : "text-content-dim"} />
+            <span className={elapsedSeconds > 0 && !isStarting ? "text-accent-teal" : "text-content-dim"}>
               {formatTime(elapsedSeconds)}
             </span>
           </span>
@@ -236,7 +220,7 @@ function GameSession({ onRestart }: { onRestart: () => void }) {
 
         <button
           onClick={onRestart}
-          className="px-3 py-1 border border-[#e05a2b] text-[#e05a2b] text-xs font-mono tracking-widest hover:bg-[#e05a2b] hover:text-[#141414] transition-all"
+          className="px-3 py-1 border border-accent-orange text-accent-orange text-xs font-mono tracking-widest hover:bg-accent-orange hover:text-bg-primary transition-all"
         >
           [ restart ]
         </button>
@@ -248,8 +232,8 @@ function GameSession({ onRestart }: { onRestart: () => void }) {
         if (!cat) return null;
         const Icon = CATEGORY_ICONS[cat.toLowerCase()];
         return (
-          <div className="relative z-10 flex justify-center py-2 border-b border-[#2e2e2e]/50">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#26a69a]/10 border border-[#26a69a]/30 text-[#26a69a] text-[11px] font-bold font-mono tracking-widest uppercase leading-none">
+          <div className="relative z-10 flex justify-center py-2 border-b border-border-default/50">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent-teal/10 border border-accent-teal/30 text-accent-teal text-[11px] font-bold font-mono tracking-widest uppercase leading-none">
               {Icon && <span className="flex items-center"><Icon size={11} /></span>}
               <span>{cat}</span>
             </span>
@@ -261,10 +245,10 @@ function GameSession({ onRestart }: { onRestart: () => void }) {
       <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {isStarting ? (
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#26a69a]/50 bg-[#1e1e1e] flex items-center justify-center text-[#26a69a]">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full border border-accent-teal/50 bg-bg-secondary flex items-center justify-center text-accent-teal">
               <LuBrain size={16} />
             </div>
-            <div className="bg-[#1e1e1e] border border-[#2e2e2e] rounded-sm px-4 py-3 text-sm text-[#888]">
+            <div className="bg-bg-secondary border border-border-default rounded-sm px-4 py-3 text-sm text-content-muted">
               <span className="cursor-blink">inicializando</span>
             </div>
           </div>
@@ -274,10 +258,10 @@ function GameSession({ onRestart }: { onRestart: () => void }) {
 
         {isLoading && (
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#26a69a]/50 bg-[#1e1e1e] flex items-center justify-center text-[#26a69a]">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full border border-accent-teal/50 bg-bg-secondary flex items-center justify-center text-accent-teal">
               <LuBrain size={16} />
             </div>
-            <div className="bg-[#1e1e1e] border border-[#2e2e2e] rounded-sm px-4 py-3 text-sm text-[#888]">
+            <div className="bg-bg-secondary border border-border-default rounded-sm px-4 py-3 text-sm text-content-muted">
               <span className="cursor-blink">pensando</span>
             </div>
           </div>
@@ -288,42 +272,41 @@ function GameSession({ onRestart }: { onRestart: () => void }) {
 
       {/* Progress bar */}
       <div className="relative z-10 px-4 pt-2">
-        <div className="flex justify-between text-[10px] text-[#555] mb-1">
+        <div className="flex justify-between text-[10px] text-content-dim mb-1">
           <span>intentos</span>
-          <span className={attempts <= 3 ? "text-[#e05a2b]" : "text-[#888]"}>
+          <span className={attempts <= 3 ? "text-accent-orange" : "text-content-muted"}>
             {attempts} restantes
           </span>
         </div>
-        <div className="h-1 bg-[#2e2e2e] rounded-full overflow-hidden">
+        <div className="h-1 bg-border-default rounded-full overflow-hidden">
           <div
-            className="h-full transition-all duration-300"
-            style={{
-              width: `${progressPct}%`,
-              backgroundColor: attempts <= 3 ? "#e05a2b" : "#26a69a",
-            }}
+            className={`h-full transition-all duration-300 ${attempts <= 3 ? "bg-accent-orange" : "bg-accent-teal"}`}
+            style={{ width: `${progressPct}%` }}
           />
         </div>
       </div>
 
       {/* Input */}
-      <div className="relative z-10 border-t border-[#2e2e2e] bg-[#141414] px-4 py-3">
+      <div className="relative z-10 border-t border-border-default bg-bg-primary px-4 py-3">
         <form onSubmit={handleSubmit} className="flex gap-2">
-          <div className="flex-1 flex items-center gap-2 bg-[#1e1e1e] border border-[#2e2e2e] rounded-sm px-3 py-2 focus-within:border-[#26a69a] transition-colors">
-            <span className="text-[#555] text-xs select-none">{"//"}</span>
+          <div className="flex-1 flex items-center gap-2 bg-bg-secondary border border-border-default rounded-sm px-3 py-2 focus-within:border-accent-teal transition-colors">
+            <span className="text-content-dim text-xs select-none">{"//"}</span>
             <input
               ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="pregunta o adivina..."
               disabled={isLoading || attempts === 0 || isStarting}
-              className="flex-1 bg-transparent text-sm text-[#f0f0f0] placeholder-[#555] outline-none font-mono"
+              className="flex-1 bg-transparent text-sm text-content-primary placeholder-content-dim outline-none font-mono"
+              aria-label="Escribe una pregunta o tu respuesta"
               autoFocus
             />
           </div>
           <button
             type="submit"
             disabled={isLoading || !inputValue.trim() || attempts === 0 || isStarting}
-            className="px-4 py-2 bg-[#e05a2b] text-[#141414] text-xs font-bold font-mono tracking-wider disabled:opacity-40 hover:bg-[#c94e22] transition-colors"
+            className="px-4 py-2 bg-accent-orange text-bg-primary text-xs font-bold font-mono tracking-wider disabled:opacity-40 hover:bg-accent-orange-hover transition-colors"
+          aria-label="Enviar"
           >
             <LuSend size={14} />
           </button>

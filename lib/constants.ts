@@ -1,6 +1,12 @@
 /** Maximum number of questions a player can ask per game */
 export const MAX_ATTEMPTS = 15;
 
+/** Control messages sent to the AI to manage game flow */
+export const GAME_SIGNALS = {
+  START: "start_game",
+  PLAYER_LOST: "__PLAYER_LOST__",
+} as const;
+
 /** Maximum number of entries kept in the scoreboard */
 export const SCOREBOARD_SIZE = 10;
 
