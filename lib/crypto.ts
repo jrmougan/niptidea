@@ -18,6 +18,18 @@ export async function encryptConcept(data: object): Promise<string> {
   return btoa(String.fromCharCode(...combined));
 }
 
+/**
+ * Decrypts a concept token produced by `encryptConcept`.
+ *
+ * IMPORTANT — silent degradation on key mismatch:
+ * If the token was encrypted with a different key (e.g. because
+ * `OPENROUTER_API_KEY` was rotated or `GAME_SECRET` changed since the token
+ * was issued), `crypto.subtle.decrypt` will throw a `DOMException`. Callers
+ * that catch this error and continue without the concept are intentionally
+ * degrading gracefully: the game session proceeds but the AI will not receive
+ * the pre-generated concept, which means the AI must re-derive one on the fly
+ * or the round will lack server-side concept injection.
+ */
 export async function decryptConcept(token: string): Promise<{ concept: string; category: string }> {
   const key = await getKey();
   const combined = Uint8Array.from(atob(token), (c) => c.charCodeAt(0));

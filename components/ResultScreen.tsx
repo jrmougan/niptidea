@@ -55,7 +55,7 @@ export default function ResultScreen({
       {/* Header */}
       <header className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-3 border-b border-border-default">
         <Link href="/" className="text-accent-orange font-bold text-sm tracking-wide text-glow-orange">
-          NiP_t<span className="text-accent-teal [text-shadow:none]">aI</span>dea
+          NiPt<span className="text-accent-teal [text-shadow:none]">AI</span>dea
         </Link>
         <div className="flex gap-2">
           <Link

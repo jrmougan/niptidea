@@ -32,14 +32,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, attempts, time_seconds, won, difficulty } = body as Record<string, unknown>;
+  const { name, attempts, time_seconds, won, difficulty } = (body as Record<string, unknown>);
 
-  if (!name || typeof attempts !== "number" || typeof time_seconds !== "number") {
+  if (
+    typeof name !== "string" ||
+    name.trim().length === 0 ||
+    typeof attempts !== "number" ||
+    !Number.isFinite(attempts) ||
+    typeof time_seconds !== "number" ||
+    !Number.isFinite(time_seconds) ||
+    typeof won !== "boolean" ||
+    (typeof difficulty !== "string" || !VALID_DIFFICULTIES.has(difficulty))
+  ) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const trimmedName = String(name).slice(0, MAX_NAME_LENGTH).trim();
-  const diff = typeof difficulty === "string" && VALID_DIFFICULTIES.has(difficulty) ? difficulty : DEFAULT_DIFFICULTY;
+  const trimmedName = name.slice(0, MAX_NAME_LENGTH).trim();
+  const diff = difficulty;
 
   try {
     const upsert = db.transaction(() => {

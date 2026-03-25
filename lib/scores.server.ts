@@ -1,15 +1,25 @@
-import type { Score } from "@/lib/db";
+import "server-only";
+import { db, type Score } from "@/lib/db";
+import { SCOREBOARD_SIZE, DIFFICULTIES, DEFAULT_DIFFICULTY } from "@/lib/constants";
+
+const VALID_DIFFICULTIES = new Set<string>(DIFFICULTIES.map((d) => d.key));
 
 /**
- * Fetch the scoreboard for a given difficulty from the internal API.
- * Returns an empty array on any error (network, non-OK response, parse failure).
+ * Query the scoreboard for a given difficulty directly from the database.
+ * Returns an empty array on any error.
  */
-export async function fetchScores(difficulty: string): Promise<Score[]> {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+export function fetchScores(difficulty: string): Score[] {
+  const diff = VALID_DIFFICULTIES.has(difficulty) ? difficulty : DEFAULT_DIFFICULTY;
   try {
-    const res = await fetch(`${base}/api/scores?difficulty=${difficulty}`, { cache: "no-store" });
-    if (!res.ok) return [];
-    return res.json();
+    return db
+      .prepare(
+        `SELECT id, name, attempts, time_seconds, won, difficulty, created_at
+         FROM scores
+         WHERE won = 1 AND difficulty = ?
+         ORDER BY attempts ASC, time_seconds ASC, created_at ASC
+         LIMIT ?`
+      )
+      .all(diff, SCOREBOARD_SIZE) as Score[];
   } catch {
     return [];
   }
