@@ -115,6 +115,15 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
   // Cleanup timer on unmount
   useEffect(() => () => stopTimer(), []);
 
+  // Scroll to bottom when virtual keyboard opens/closes
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const handler = () => messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    vv.addEventListener("resize", handler);
+    return () => vv.removeEventListener("resize", handler);
+  }, []);
+
   // Restore focus to input after each AI response
   useEffect(() => {
     if (!isLoading && !isStarting && !gameOver) {
@@ -308,7 +317,7 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
       </div>
 
       {/* Input */}
-      <div className="relative z-10 border-t border-border-default bg-bg-primary px-4 py-3">
+      <div className="relative z-10 border-t border-border-default bg-bg-primary px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <div className="flex-1 flex items-center gap-2 bg-bg-secondary border border-border-default rounded-sm px-3 py-2 focus-within:border-accent-teal transition-colors">
             <span className="text-content-dim text-xs select-none">{"//"}</span>
@@ -318,9 +327,8 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="pregunta o adivina..."
               disabled={isLoading || attempts === 0 || isStarting}
-              className="flex-1 bg-transparent text-sm text-content-primary placeholder-content-dim outline-none font-mono"
+              className="flex-1 bg-transparent text-[16px] md:text-sm text-content-primary placeholder-content-dim outline-none font-mono"
               aria-label="Escribe una pregunta o tu respuesta"
-              autoFocus
             />
           </div>
           <button
