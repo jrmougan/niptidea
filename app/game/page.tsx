@@ -99,7 +99,7 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
     if (startedRef.current) return;
     startedRef.current = true;
 
-    fetchGameResponse([{ role: "user", content: GAME_SIGNALS.START }])
+    fetchGameResponse([{ role: "user", content: GAME_SIGNALS.START }], token)
       .then((intro) => {
         setMessages([
           { id: "msg-start", role: "user", parts: [{ type: "text", text: GAME_SIGNALS.START }] },
@@ -347,9 +347,11 @@ export default function GamePage() {
   const [session, setSession] = useState<{ key: number; token: string; category: string } | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     initGame()
-      .then(({ token, category }) => setSession({ key: 0, token, category }))
-      .catch(() => setSession({ key: 0, token: "", category: "" }));
+      .then(({ token, category }) => { if (!cancelled) setSession({ key: 0, token, category }); })
+      .catch(() => { if (!cancelled) setSession({ key: 0, token: "", category: "" }); });
+    return () => { cancelled = true; };
   }, []);
 
   if (!session) {
