@@ -2,6 +2,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { encryptConcept } from "@/lib/crypto";
 import {
+  AI_MODEL,
   CATEGORY_WEIGHTS,
   DIFFICULTY_PROMPTS,
   DEFAULT_DIFFICULTY,
@@ -28,7 +29,7 @@ export async function POST(req: Request): Promise<Response> {
   const category = pickCategory();
 
   const { text } = await generateText({
-    model: openrouter("deepseek/deepseek-chat-v3-0324"),
+    model: openrouter(AI_MODEL),
     temperature: 0.9,
     prompt: `Eres el motor de un juego de adivinanzas para público hispanohablante.
 Categoría asignada: ${category}.

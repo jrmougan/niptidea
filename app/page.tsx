@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LuBrain, LuMessageCircle, LuTarget, LuTrophy } from "react-icons/lu";
-import { MAX_ATTEMPTS } from "@/lib/constants";
+import { AI_MODEL, MAX_ATTEMPTS } from "@/lib/constants";
 
 const steps = [
   { num: "01", icon: LuBrain,          text: "La IA piensa en algo" },
@@ -30,7 +30,7 @@ export default function Home() {
         {/* Title */}
         <div className="flex flex-col gap-2">
           <h1 className="text-5xl font-bold tracking-tight text-accent-orange text-glow-orange">
-            NiP_t_aIdea
+            NiP_t<span className="text-accent-teal [text-shadow:none]">aI</span>dea
           </h1>
           <p className="text-sm text-content-muted font-mono tracking-widest">
             // ¿puedes adivinar en qué está pensando la IA?
@@ -74,7 +74,7 @@ export default function Home() {
         </div>
 
         <p className="text-xs text-content-dim mt-4">
-          © NiP_t_aIdea — powered by DeepSeek V3
+          © NiP_taIdea — powered by {AI_MODEL}
         </p>
       </div>
     </main>

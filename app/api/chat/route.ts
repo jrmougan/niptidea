@@ -2,6 +2,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import type { ModelMessage } from "ai";
 import { decryptConcept } from "@/lib/crypto";
+import { AI_MODEL } from "@/lib/constants";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -9,7 +10,7 @@ const openrouter = createOpenRouter({
 
 export const runtime = "edge";
 
-const BASE_PROMPT = `Eres NiP_t_aIdea, una IA sarcástica, breve y condescendiente que juega al juego de las adivinanzas.
+const BASE_PROMPT = `Eres NiP_taIdea, una IA sarcástica, breve y condescendiente que juega al juego de las adivinanzas.
 
 Cuando recibas "start_game", anuncia la categoría del concepto con el formato exacto: "CATEGORÍA: Persona", "CATEGORÍA: Objeto" o "CATEGORÍA: Concepto". Añade una frase sarcástica de bienvenida.
 
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
   const lastUserMsg = getLastUserMessage(modelMessages);
 
   const result = streamText({
-    model: openrouter("deepseek/deepseek-chat-v3-0324"),
+    model: openrouter(AI_MODEL),
     system: buildSystemPrompt(concept, category, lastUserMsg),
     messages: modelMessages,
   });

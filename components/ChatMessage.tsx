@@ -18,7 +18,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
           <LuBrain size={16} />
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-[10px] text-accent-teal font-mono">NiP_t_aIdea</span>
+          <span className="text-[10px] text-accent-teal font-mono">NiP_t<span className="text-accent-teal">aI</span>dea</span>
           <div className="bg-bg-secondary border border-border-default rounded-sm px-4 py-3 text-sm text-content-primary leading-relaxed font-mono whitespace-pre-wrap">
             {text}
           </div>

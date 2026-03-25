@@ -196,7 +196,7 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-6 py-3 border-b border-border-default bg-bg-primary">
         <Link href="/" className="text-accent-orange font-bold text-sm tracking-wide text-glow-orange">
-          NiP_t_aIdea
+          NiP_t<span className="text-accent-teal [text-shadow:none]">aI</span>dea
         </Link>
 
         <div className="flex items-center gap-4 text-xs font-mono text-content-muted">

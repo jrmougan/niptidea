@@ -39,6 +39,9 @@ export const DIFFICULTY_PROMPTS: Record<string, string> = {
 /** Default difficulty used if none is specified */
 export const DEFAULT_DIFFICULTY = "facil" as const;
 
+/** OpenRouter model ID used for concept generation and chat */
+export const AI_MODEL = "google/gemini-2.5-flash-lite-preview-09-2025";
+
 /** Seconds at which the AI injects a taunt into the chat */
 export const TAUNT_THRESHOLDS: { seconds: number; message: string }[] = [
   { seconds: 60,  message: "...¿Sigues ahí? Llevo esperando un minuto. Hasta el teclado se ha dormido." },
