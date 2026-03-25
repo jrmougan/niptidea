@@ -11,6 +11,7 @@ interface ResultScreenProps {
   concept: string;
   attemptsUsed: number;
   timeSeconds: number;
+  difficulty: string;
   onRestart: () => void;
 }
 
@@ -19,6 +20,7 @@ export default function ResultScreen({
   concept,
   attemptsUsed,
   timeSeconds,
+  difficulty,
   onRestart,
 }: ResultScreenProps) {
   const isWin = result === "win";
@@ -35,7 +37,7 @@ export default function ResultScreen({
       const res = await fetch("/api/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), attempts: attemptsUsed, time_seconds: timeSeconds, won: isWin }),
+        body: JSON.stringify({ name: name.trim(), attempts: attemptsUsed, time_seconds: timeSeconds, won: isWin, difficulty }),
       });
       const data = await res.json();
       setSaved(data.saved === true);

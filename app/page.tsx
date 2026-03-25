@@ -12,22 +12,31 @@ const steps = [
 
 const MEDAL_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
 
-async function getTopScores(): Promise<Score[]> {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/scores`,
-      { cache: "no-store" },
-    );
-    if (!res.ok) return [];
-    const scores: Score[] = await res.json();
-    return scores.slice(0, 3);
-  } catch {
-    return [];
-  }
+const DIFFICULTIES = [
+  { key: "facil",   label: "FÁCIL"   },
+  { key: "medio",   label: "MEDIO"   },
+  { key: "dificil", label: "DIFÍCIL" },
+];
+
+async function getTopScoresByDifficulty(): Promise<Record<string, Score[]>> {
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const results = await Promise.all(
+    DIFFICULTIES.map(async ({ key }) => {
+      try {
+        const res = await fetch(`${base}/api/scores?difficulty=${key}`, { cache: "no-store" });
+        if (!res.ok) return [key, []] as [string, Score[]];
+        const scores: Score[] = await res.json();
+        return [key, scores.slice(0, 3)] as [string, Score[]];
+      } catch {
+        return [key, []] as [string, Score[]];
+      }
+    }),
+  );
+  return Object.fromEntries(results);
 }
 
 export default async function Home() {
-  const topScores = await getTopScores();
+  const topScoresByDifficulty = await getTopScoresByDifficulty();
   return (
     <main className="relative flex flex-col flex-1 items-center justify-center min-h-screen overflow-hidden">
       <div className="scanlines fixed inset-0 z-0 pointer-events-none" />
@@ -92,9 +101,9 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Mini scoreboard */}
+        {/* Mini scoreboards by difficulty */}
         <div className="w-full mt-2">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <p className="text-xs text-accent-teal tracking-[0.3em] uppercase text-glow-teal flex items-center gap-2">
               <LuTrophy size={12} />TOP_3
             </p>
@@ -103,28 +112,40 @@ export default async function Home() {
             </Link>
           </div>
 
-          {topScores.length === 0 ? (
-            <p className="text-center text-content-dim text-xs font-mono py-4 border border-border-default">
-              // sin scores todavía — sé el primero
-            </p>
-          ) : (
-            <div className="border border-border-default divide-y divide-border-default">
-              {topScores.map((score, i) => (
-                <div key={score.id} className="flex items-center gap-3 px-4 py-2">
-                  <LuMedal size={14} style={{ color: MEDAL_COLORS[i] }} className="flex-shrink-0" />
-                  <span className="flex-1 font-mono text-xs uppercase tracking-wider text-content-primary truncate">
-                    {score.name}
-                  </span>
-                  <span className="font-mono text-xs text-content-muted">
-                    {score.attempts}<span className="text-content-dim">/{MAX_ATTEMPTS}</span>
-                  </span>
-                  <span className="font-mono text-xs text-accent-teal flex items-center gap-1">
-                    <LuTimer size={10} />{formatTime(score.time_seconds)}
-                  </span>
+          <div className="grid grid-cols-3 gap-3">
+            {DIFFICULTIES.map(({ key, label }) => {
+              const scores = topScoresByDifficulty[key] ?? [];
+              return (
+                <div key={key} className="flex flex-col border border-border-default">
+                  <Link
+                    href={`/scoreboard?d=${key}`}
+                    className="px-3 py-1.5 border-b border-border-default bg-bg-card text-[10px] font-mono tracking-widest text-content-dim hover:text-accent-teal transition-colors text-center"
+                  >
+                    [{label}]
+                  </Link>
+                  {scores.length === 0 ? (
+                    <p className="text-center text-content-dim text-[10px] font-mono py-4 px-2">
+                      // vacío
+                    </p>
+                  ) : (
+                    <div className="divide-y divide-border-default/50">
+                      {scores.map((score, i) => (
+                        <div key={score.id} className="flex items-center gap-2 px-2 py-1.5">
+                          <LuMedal size={12} style={{ color: MEDAL_COLORS[i] }} className="flex-shrink-0" />
+                          <span className="flex-1 font-mono text-[10px] uppercase tracking-wider text-content-primary truncate">
+                            {score.name}
+                          </span>
+                          <span className="font-mono text-[10px] text-content-muted flex-shrink-0">
+                            {score.attempts}<span className="text-content-dim">/{MAX_ATTEMPTS}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
         </div>
 
         <p className="text-xs text-content-dim mt-4">

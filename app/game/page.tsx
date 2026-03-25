@@ -38,7 +38,7 @@ async function fetchGameResponse(
   return res.text();
 }
 
-function GameSession({ onRestart, token, category }: { onRestart: () => void; token: string; category: string }) {
+function GameSession({ onRestart, token, category, difficulty }: { onRestart: () => void; token: string; category: string; difficulty: string }) {
   const transport = useMemo(
     () => new TextStreamChatTransport({ api: "/api/chat", body: { token } }),
     [token],
@@ -227,6 +227,7 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
         concept={revealedConcept}
         attemptsUsed={MAX_ATTEMPTS - attempts}
         timeSeconds={finalTimeRef.current}
+        difficulty={difficulty}
         onRestart={onRestart}
       />
     );
@@ -371,62 +372,125 @@ function addSeenConcept(concept: string) {
   } catch {}
 }
 
-async function initGame(category?: string): Promise<{ token: string; category: string }> {
+const DIFFICULTIES = [
+  { key: "facil",  label: "FÁCIL",  desc: "conceptos muy conocidos" },
+  { key: "medio",  label: "MEDIO",  desc: "algo más específico" },
+  { key: "dificil",label: "DIFÍCIL",desc: "para los valientes" },
+];
+
+async function initGame(category?: string, difficulty?: string): Promise<{ token: string; category: string }> {
   const r = await fetch("/api/game/init", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ seenConcepts: getSeenConcepts(), ...(category && { category }) }),
+    body: JSON.stringify({
+      seenConcepts: getSeenConcepts(),
+      ...(category && { category }),
+      ...(difficulty && { difficulty }),
+    }),
   });
   const data = await r.json();
   return { token: data.token ?? "", category: data.category ?? "" };
 }
 
 export default function GamePage() {
-  const [pickedCategory, setPickedCategory] = useState<string | null>(null);
-  const [session, setSession] = useState<{ key: number; token: string; category: string } | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState("medio");
+  const [loading, setLoading] = useState(false);
+  const [session, setSession] = useState<{ key: number; token: string; category: string; difficulty: string } | null>(null);
 
-  const startGame = (category?: string) => {
-    setPickedCategory(category ?? "__random__");
-    initGame(category)
-      .then(({ token, category: cat }) => setSession((s) => ({ key: (s?.key ?? 0) + 1, token, category: cat })))
-      .catch(() => setSession((s) => ({ key: (s?.key ?? 0) + 1, token: "", category: "" })));
+  const startGame = () => {
+    setLoading(true);
+    initGame(selectedCategory ?? undefined, selectedDifficulty)
+      .then(({ token, category }) =>
+        setSession((s) => ({ key: (s?.key ?? 0) + 1, token, category, difficulty: selectedDifficulty }))
+      )
+      .catch(() =>
+        setSession((s) => ({ key: (s?.key ?? 0) + 1, token: "", category: "", difficulty: selectedDifficulty }))
+      );
   };
 
-  // Category selector
-  if (!pickedCategory) {
+  // Category + difficulty selector
+  if (!loading && !session) {
     return (
-      <div className="flex h-[100dvh] items-center justify-center bg-bg-primary px-6">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-bg-primary px-4 py-8">
         <div className="scanlines fixed inset-0 z-0 pointer-events-none" />
-        <div className="relative z-10 flex flex-col items-center gap-8 font-mono text-center w-full max-w-sm">
-          <div className="w-14 h-14 rounded-full border border-accent-teal/40 bg-bg-secondary text-accent-teal brain-pulse flex items-center justify-center">
-            <LuBrain size={24} />
+        <div className="relative z-10 flex flex-col items-center gap-6 font-mono text-center w-full max-w-md">
+
+          {/* Logo */}
+          <div className="flex flex-col items-center gap-1">
+            <h1 className="text-2xl font-bold text-accent-orange neon-flicker tracking-wide">
+              NiP_t<span className="text-accent-teal [text-shadow:none]">aI</span>dea
+            </h1>
+            <p className="text-[11px] text-content-dim tracking-[0.25em]">// select_category</p>
           </div>
-          <div>
-            <p className="text-xs text-accent-teal tracking-[0.3em] uppercase mb-1">elige categoría</p>
-            <p className="text-content-dim text-xs">o deja que yo decida</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 w-full">
+
+          <p className="text-xs text-content-muted leading-relaxed max-w-xs">
+            Elige qué quiere que adivine la IA,<br />luego intenta descubrirlo en {15} preguntas o menos.
+          </p>
+
+          {/* Category grid */}
+          <div className="grid grid-cols-4 gap-2 w-full">
             {Object.entries(CATEGORIES).map(([name]) => {
               const Icon = CATEGORY_ICONS[name.toLowerCase()];
+              const isSelected = selectedCategory === name;
               return (
                 <button
                   key={name}
-                  onClick={() => startGame(name)}
-                  className="flex items-center gap-2 px-4 py-3 border border-border-default bg-bg-secondary text-content-primary text-sm tracking-wide hover:border-accent-teal hover:text-accent-teal transition-colors"
+                  onClick={() => setSelectedCategory(isSelected ? null : name)}
+                  className={`flex flex-col items-center gap-2 px-2 py-3 border transition-all ${
+                    isSelected
+                      ? "border-accent-orange bg-accent-orange/10 text-accent-orange"
+                      : "border-border-default bg-bg-secondary text-content-muted hover:border-border-default/80 hover:text-content-primary"
+                  }`}
                 >
-                  {Icon && <Icon size={15} />}
-                  {name}
+                  {Icon && <Icon size={18} />}
+                  <span className="text-[10px] tracking-wider uppercase leading-none">{name}</span>
                 </button>
               );
             })}
+            {/* Sorpréndeme — ocupa el espacio restante en la última fila */}
             <button
-              onClick={() => startGame()}
-              className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 border border-accent-orange/50 bg-bg-secondary text-accent-orange text-sm tracking-wide hover:border-accent-orange hover:bg-accent-orange/10 transition-colors"
+              onClick={() => setSelectedCategory(selectedCategory === "__random__" ? null : "__random__")}
+              className={`col-span-3 flex items-center justify-center gap-2 px-3 py-3 border transition-all text-xs tracking-wider ${
+                selectedCategory === "__random__"
+                  ? "border-accent-orange bg-accent-orange/10 text-accent-orange"
+                  : "border-border-default bg-bg-secondary text-content-muted hover:text-content-primary"
+              }`}
             >
-              <LuShuffle size={15} />
+              <LuShuffle size={14} />
               Sorpréndeme
             </button>
           </div>
+
+          {/* Difficulty */}
+          <div className="w-full flex flex-col gap-3">
+            <p className="text-[11px] text-content-dim tracking-[0.25em]">// difficulty_level</p>
+            <div className="grid grid-cols-3 gap-2">
+              {DIFFICULTIES.map(({ key, label, desc }) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedDifficulty(key)}
+                  className={`flex flex-col items-center gap-1 px-2 py-3 border transition-all ${
+                    selectedDifficulty === key
+                      ? "border-accent-teal text-accent-teal bg-accent-teal/5"
+                      : "border-border-default text-content-muted hover:border-border-default/80 hover:text-content-primary"
+                  }`}
+                >
+                  <span className="text-[11px] font-bold tracking-widest">[{label}]</span>
+                  <span className="text-[9px] text-content-dim leading-tight">{desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Start button */}
+          <button
+            onClick={startGame}
+            disabled={!selectedCategory}
+            className="w-full py-3 bg-accent-orange text-bg-primary text-sm font-bold tracking-wider disabled:opacity-30 hover:bg-accent-orange-hover transition-colors"
+          >
+            {`> start_game(${selectedCategory === "__random__" ? "random" : selectedCategory?.toLowerCase() ?? "..."}, ${selectedDifficulty})`}
+          </button>
         </div>
       </div>
     );
@@ -454,7 +518,8 @@ export default function GamePage() {
 
   const handleRestart = () => {
     setSession(null);
-    setPickedCategory(null);
+    setSelectedCategory(null);
+    setLoading(false);
   };
 
   return (
@@ -462,6 +527,7 @@ export default function GamePage() {
       key={session.key}
       token={session.token}
       category={session.category}
+      difficulty={session.difficulty}
       onRestart={handleRestart}
     />
   );

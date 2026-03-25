@@ -26,10 +26,13 @@ db.exec(`
   );
 `);
 
-// Non-destructive migration: add time_seconds if it doesn't exist yet
+// Non-destructive migrations
 const cols = (db.prepare(`PRAGMA table_info(scores)`).all() as { name: string }[]).map(c => c.name);
 if (!cols.includes("time_seconds")) {
   db.exec(`ALTER TABLE scores ADD COLUMN time_seconds INTEGER NOT NULL DEFAULT 0;`);
+}
+if (!cols.includes("difficulty")) {
+  db.exec(`ALTER TABLE scores ADD COLUMN difficulty TEXT NOT NULL DEFAULT 'facil';`);
 }
 
 export interface Score {
@@ -38,5 +41,6 @@ export interface Score {
   attempts: number;
   time_seconds: number;
   won: number;
+  difficulty: string;
   created_at: string;
 }
