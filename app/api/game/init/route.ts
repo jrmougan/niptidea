@@ -32,7 +32,10 @@ export async function POST(req: Request): Promise<Response> {
   const difficulty: string = body.difficulty ?? DEFAULT_DIFFICULTY;
   const difficultyPrompt = DIFFICULTY_PROMPTS[difficulty] ?? DIFFICULTY_PROMPTS[DEFAULT_DIFFICULTY];
   const seenConcepts: string[] = Array.isArray(body.seenConcepts) ? body.seenConcepts : [];
-  const category = pickCategory();
+  const requestedCategory = typeof body.category === "string" && body.category in CATEGORIES
+    ? body.category
+    : null;
+  const category = requestedCategory ?? pickCategory();
 
   const avoidClause = seenConcepts.length > 0
     ? `\nConceptos ya vistos que NO puedes usar ni similares: ${seenConcepts.join(", ")}.`

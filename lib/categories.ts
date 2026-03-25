@@ -13,7 +13,8 @@ export const CATEGORIES: Record<string, CategoryDef> = {
   Lugar:    { weight: 20, description: "ciudades, países, monumentos, accidentes geográficos" },
   Animal:   { weight: 15, description: "especies animales, reales o míticas" },
   Obra:     { weight: 20, description: "libros, películas, canciones, cuadros, videojuegos" },
-  Concepto: { weight: 20, description: "ciencia, filosofía, emociones, fenómenos, inventos" },
+  Comida:   { weight: 10, description: "platos, ingredientes, bebidas, cocinas del mundo" },
+  Deporte:  { weight: 10, description: "deportes, atletas famosos, competiciones, equipos" },
 };
 
 /** Weighted random category pick */

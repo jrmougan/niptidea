@@ -4,12 +4,13 @@ import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { LuBrain, LuSend, LuTimer, LuUsers, LuMapPin, LuPawPrint, LuClapperboard, LuLightbulb } from "react-icons/lu";
+import { LuBrain, LuSend, LuTimer, LuUsers, LuMapPin, LuPawPrint, LuClapperboard, LuUtensils, LuDumbbell, LuShuffle } from "react-icons/lu";
 import type { IconType } from "react-icons";
 import ChatMessage from "@/components/ChatMessage";
 import ResultScreen from "@/components/ResultScreen";
 import { MAX_ATTEMPTS, TAUNT_THRESHOLDS, GAME_SIGNALS } from "@/lib/constants";
 import { formatTime, getMessageText } from "@/lib/utils";
+import { CATEGORIES } from "@/lib/categories";
 
 
 const CATEGORY_ICONS: Record<string, IconType> = {
@@ -17,7 +18,8 @@ const CATEGORY_ICONS: Record<string, IconType> = {
   lugar:    LuMapPin,
   animal:   LuPawPrint,
   obra:     LuClapperboard,
-  concepto: LuLightbulb,
+  comida:   LuUtensils,
+  deporte:  LuDumbbell,
 };
 
 
@@ -368,27 +370,68 @@ function addSeenConcept(concept: string) {
   } catch {}
 }
 
-async function initGame(): Promise<{ token: string; category: string }> {
+async function initGame(category?: string): Promise<{ token: string; category: string }> {
   const r = await fetch("/api/game/init", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ seenConcepts: getSeenConcepts() }),
+    body: JSON.stringify({ seenConcepts: getSeenConcepts(), ...(category && { category }) }),
   });
   const data = await r.json();
   return { token: data.token ?? "", category: data.category ?? "" };
 }
 
 export default function GamePage() {
+  const [pickedCategory, setPickedCategory] = useState<string | null>(null);
   const [session, setSession] = useState<{ key: number; token: string; category: string } | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    initGame()
-      .then(({ token, category }) => { if (!cancelled) setSession({ key: 0, token, category }); })
-      .catch(() => { if (!cancelled) setSession({ key: 0, token: "", category: "" }); });
-    return () => { cancelled = true; };
-  }, []);
+  const startGame = (category?: string) => {
+    setPickedCategory(category ?? "__random__");
+    initGame(category)
+      .then(({ token, category: cat }) => setSession((s) => ({ key: (s?.key ?? 0) + 1, token, category: cat })))
+      .catch(() => setSession((s) => ({ key: (s?.key ?? 0) + 1, token: "", category: "" })));
+  };
 
+  // Category selector
+  if (!pickedCategory) {
+    return (
+      <div className="flex h-[100dvh] items-center justify-center bg-bg-primary px-6">
+        <div className="scanlines fixed inset-0 z-0 pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center gap-8 font-mono text-center w-full max-w-sm">
+          <div className="w-14 h-14 rounded-full border border-accent-teal/40 bg-bg-secondary text-accent-teal brain-pulse flex items-center justify-center">
+            <LuBrain size={24} />
+          </div>
+          <div>
+            <p className="text-xs text-accent-teal tracking-[0.3em] uppercase mb-1">elige categoría</p>
+            <p className="text-content-dim text-xs">o deja que yo decida</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 w-full">
+            {Object.entries(CATEGORIES).map(([name]) => {
+              const Icon = CATEGORY_ICONS[name.toLowerCase()];
+              return (
+                <button
+                  key={name}
+                  onClick={() => startGame(name)}
+                  className="flex items-center gap-2 px-4 py-3 border border-border-default bg-bg-secondary text-content-primary text-sm tracking-wide hover:border-accent-teal hover:text-accent-teal transition-colors"
+                >
+                  {Icon && <Icon size={15} />}
+                  {name}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => startGame()}
+              className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 border border-accent-orange/50 bg-bg-secondary text-accent-orange text-sm tracking-wide hover:border-accent-orange hover:bg-accent-orange/10 transition-colors"
+            >
+              <LuShuffle size={15} />
+              Sorpréndeme
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading screen
   if (!session) {
     return (
       <div className="flex h-[100dvh] items-center justify-center bg-bg-primary">
@@ -410,9 +453,7 @@ export default function GamePage() {
 
   const handleRestart = () => {
     setSession(null);
-    initGame()
-      .then(({ token, category }) => setSession((s) => ({ key: (s?.key ?? 0) + 1, token, category })))
-      .catch(() => setSession((s) => ({ key: (s?.key ?? 0) + 1, token: "", category: "" })));
+    setPickedCategory(null);
   };
 
   return (
