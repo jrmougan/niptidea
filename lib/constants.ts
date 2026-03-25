@@ -13,15 +13,6 @@ export const SCOREBOARD_SIZE = 10;
 /** Maximum character length for a player name */
 export const MAX_NAME_LENGTH = 16;
 
-/**
- * Category weights for concept generation (must sum to 100).
- * Adjust to control how often each category appears.
- */
-export const CATEGORY_WEIGHTS: Record<string, number> = {
-  Persona:  40,   // personajes históricos, famosos, ficticios
-  Objeto:   40,   // objetos cotidianos, tecnología, comida...
-  Concepto: 20,   // ciencia, filosofía, emociones, fenómenos...
-};
 
 /**
  * Difficulty levels for concept generation.
@@ -39,8 +30,11 @@ export const DIFFICULTY_PROMPTS: Record<string, string> = {
 /** Default difficulty used if none is specified */
 export const DEFAULT_DIFFICULTY = "facil" as const;
 
+/** Number of concepts pre-generated per session pool */
+export const CONCEPT_POOL_SIZE = 8;
+
 /** OpenRouter model ID used for concept generation and chat */
-export const AI_MODEL = "google/gemini-2.5-flash-lite-preview-09-2025";
+export const AI_MODEL = "google/gemini-3-flash-preview";
 
 /** Seconds at which the AI injects a taunt into the chat */
 export const TAUNT_THRESHOLDS: { seconds: number; message: string }[] = [

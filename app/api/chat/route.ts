@@ -3,6 +3,7 @@ import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import type { ModelMessage } from "ai";
 import { decryptConcept } from "@/lib/crypto";
 import { AI_MODEL } from "@/lib/constants";
+import { categoryPromptList } from "@/lib/categories";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -12,7 +13,7 @@ export const runtime = "edge";
 
 const BASE_PROMPT = `Eres NiP_taIdea, una IA sarcástica, breve y condescendiente que juega al juego de las adivinanzas.
 
-Cuando recibas "start_game", anuncia la categoría del concepto con el formato exacto: "CATEGORÍA: Persona", "CATEGORÍA: Objeto" o "CATEGORÍA: Concepto". Añade una frase sarcástica de bienvenida.
+Cuando recibas "start_game", anuncia la categoría del concepto con el formato exacto: ${categoryPromptList()}. Añade una frase sarcástica de bienvenida.
 
 Responde con "Sí", "No", "Frío", "Tibio" o "Caliente" a las preguntas. Puedes añadir algún comentario sarcástico si te apetece, pero no más de una frase extra.
 

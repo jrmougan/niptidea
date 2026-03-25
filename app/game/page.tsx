@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { LuBrain, LuSend, LuTimer, LuUsers, LuBox, LuLightbulb } from "react-icons/lu";
+import { LuBrain, LuSend, LuTimer, LuUsers, LuMapPin, LuPawPrint, LuClapperboard, LuLightbulb } from "react-icons/lu";
 import type { IconType } from "react-icons";
 import ChatMessage from "@/components/ChatMessage";
 import ResultScreen from "@/components/ResultScreen";
@@ -13,24 +13,29 @@ import { formatTime, getMessageText } from "@/lib/utils";
 
 
 const CATEGORY_ICONS: Record<string, IconType> = {
-  persona: LuUsers,
-  objeto: LuBox,
+  persona:  LuUsers,
+  lugar:    LuMapPin,
+  animal:   LuPawPrint,
+  obra:     LuClapperboard,
   concepto: LuLightbulb,
 };
 
 
-async function fetchGameResponse(messages: { role: string; content: string }[]): Promise<string> {
+async function fetchGameResponse(
+  messages: { role: string; content: string }[],
+  token?: string,
+): Promise<string> {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, ...(token && { token }) }),
   });
 
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.text();
 }
 
-function GameSession({ onRestart, token, category }: { onRestart: () => void; token: string; category: string }) {
+function GameSession({ onRestart, onContinue, token, category }: { onRestart: () => void; onContinue: () => void; token: string; category: string }) {
   const transport = useMemo(
     () => new TextStreamChatTransport({ api: "/api/chat", body: { token } }),
     [token],
@@ -152,12 +157,35 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
     ) {
       const lastMsg = messages[messages.length - 1];
       const isRealAIResponse = lastMsg?.role === "assistant" && !lastMsg.id.startsWith("taunt-");
-      if (isRealAIResponse) {
-        loseTriggeredRef.current = true;
-        sendMessage({ text: GAME_SIGNALS.PLAYER_LOST });
-      }
+      if (!isRealAIResponse) return;
+
+      loseTriggeredRef.current = true;
+
+      const history = messages
+        .filter((m) => {
+          const t = getMessageText(m);
+          return t !== GAME_SIGNALS.START && t !== GAME_SIGNALS.PLAYER_LOST;
+        })
+        .map((m) => ({ role: m.role as string, content: getMessageText(m) }));
+
+      fetchGameResponse(
+        [...history, { role: "user", content: GAME_SIGNALS.PLAYER_LOST }],
+        token,
+      )
+        .then((response) => {
+          stopTimer();
+          finalTimeRef.current = elapsedSeconds;
+          const match = response.match(/ERA:\s*(.+)/i);
+          if (match) setRevealedConcept(match[1].trim());
+          setMessages((prev) => [
+            ...prev,
+            { id: "msg-game-over", role: "assistant" as const, parts: [{ type: "text" as const, text: response }] },
+          ]);
+          setGameOver("lose");
+        })
+        .catch(() => setGameOver("lose"));
     }
-  }, [attempts, isLoading, messages, gameOver, sendMessage]);
+  }, [attempts, isLoading, messages, gameOver, token, elapsedSeconds, stopTimer, setMessages]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,6 +207,7 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
         attemptsUsed={MAX_ATTEMPTS - attempts}
         timeSeconds={finalTimeRef.current}
         onRestart={onRestart}
+        onContinue={onContinue}
       />
     );
   }
@@ -309,16 +338,56 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
   );
 }
 
+const POOL_KEY = "niptaidea_pool";
+const USED_KEY = "niptaidea_used";
+
+type PoolEntry = { category: string; token: string; concept: string };
+
+function getPool(): PoolEntry[] {
+  try { return JSON.parse(sessionStorage.getItem(POOL_KEY) ?? "[]"); } catch { return []; }
+}
+
+function savePool(pool: PoolEntry[]) {
+  try { sessionStorage.setItem(POOL_KEY, JSON.stringify(pool)); } catch {}
+}
+
+function getUsedConcepts(): string[] {
+  try { return JSON.parse(sessionStorage.getItem(USED_KEY) ?? "[]"); } catch { return []; }
+}
+
+function addUsedConcepts(concepts: string[]) {
+  try {
+    const prev = getUsedConcepts();
+    sessionStorage.setItem(USED_KEY, JSON.stringify([...prev, ...concepts]));
+  } catch {}
+}
+
 async function initGame(): Promise<{ token: string; category: string }> {
-  const r = await fetch("/api/game/init", { method: "POST" });
-  const data = await r.json();
-  return { token: data.token ?? "", category: data.category ?? "" };
+  let pool = getPool();
+
+  if (pool.length === 0) {
+    const r = await fetch("/api/game/init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usedConcepts: getUsedConcepts() }),
+    });
+    const data = await r.json();
+    pool = Array.isArray(data.pool) ? data.pool : [];
+    console.log("Concept pool:", pool.map((e) => `${e.concept} (${e.category})`));
+    addUsedConcepts(pool.map((e) => e.concept));
+    savePool(pool);
+  }
+
+  const [entry, ...rest] = pool;
+  savePool(rest);
+  return { token: entry?.token ?? "", category: entry?.category ?? "" };
 }
 
 export default function GamePage() {
   const [session, setSession] = useState<{ key: number; token: string; category: string } | null>(null);
 
   useEffect(() => {
+    savePool([]);
     initGame()
       .then(({ token, category }) => setSession({ key: 0, token, category }))
       .catch(() => setSession({ key: 0, token: "", category: "" }));
@@ -343,7 +412,17 @@ export default function GamePage() {
     );
   }
 
+  // Full reset: clears pool (header restart or fresh navigation)
   const handleRestart = () => {
+    savePool([]);
+    setSession(null);
+    initGame()
+      .then(({ token, category }) => setSession((s) => ({ key: (s?.key ?? 0) + 1, token, category })))
+      .catch(() => setSession((s) => ({ key: (s?.key ?? 0) + 1, token: "", category: "" })));
+  };
+
+  // Continue: consumes next concept from pool (ResultScreen "jugar de nuevo")
+  const handleContinue = () => {
     setSession(null);
     initGame()
       .then(({ token, category }) => setSession((s) => ({ key: (s?.key ?? 0) + 1, token, category })))
@@ -356,6 +435,7 @@ export default function GamePage() {
       token={session.token}
       category={session.category}
       onRestart={handleRestart}
+      onContinue={handleContinue}
     />
   );
 }

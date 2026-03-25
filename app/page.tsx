@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { LuBrain, LuMessageCircle, LuTarget, LuTrophy } from "react-icons/lu";
+import { LuBrain, LuMessageCircle, LuTarget, LuTrophy, LuMedal, LuTimer } from "react-icons/lu";
 import { AI_MODEL, MAX_ATTEMPTS } from "@/lib/constants";
+import type { Score } from "@/lib/db";
+import { formatTime } from "@/lib/utils";
 
 const steps = [
   { num: "01", icon: LuBrain,          text: "La IA piensa en algo" },
@@ -8,7 +10,24 @@ const steps = [
   { num: "03", icon: LuTarget,         text: `Adivínalo antes de agotar ${MAX_ATTEMPTS} preguntas` },
 ];
 
-export default function Home() {
+const MEDAL_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
+
+async function getTopScores(): Promise<Score[]> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/scores`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) return [];
+    const scores: Score[] = await res.json();
+    return scores.slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
+export default async function Home() {
+  const topScores = await getTopScores();
   return (
     <main className="relative flex flex-col flex-1 items-center justify-center min-h-screen overflow-hidden">
       <div className="scanlines fixed inset-0 z-0 pointer-events-none" />
@@ -71,6 +90,41 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Mini scoreboard */}
+        <div className="w-full mt-2">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-accent-teal tracking-[0.3em] uppercase text-glow-teal flex items-center gap-2">
+              <LuTrophy size={12} />TOP_3
+            </p>
+            <Link href="/scoreboard" className="text-[10px] text-content-dim font-mono hover:text-accent-teal transition-colors tracking-wider">
+              ver todo →
+            </Link>
+          </div>
+
+          {topScores.length === 0 ? (
+            <p className="text-center text-content-dim text-xs font-mono py-4 border border-border-default">
+              // sin scores todavía — sé el primero
+            </p>
+          ) : (
+            <div className="border border-border-default divide-y divide-border-default">
+              {topScores.map((score, i) => (
+                <div key={score.id} className="flex items-center gap-3 px-4 py-2">
+                  <LuMedal size={14} style={{ color: MEDAL_COLORS[i] }} className="flex-shrink-0" />
+                  <span className="flex-1 font-mono text-xs uppercase tracking-wider text-content-primary truncate">
+                    {score.name}
+                  </span>
+                  <span className="font-mono text-xs text-content-muted">
+                    {score.attempts}<span className="text-content-dim">/{MAX_ATTEMPTS}</span>
+                  </span>
+                  <span className="font-mono text-xs text-accent-teal flex items-center gap-1">
+                    <LuTimer size={10} />{formatTime(score.time_seconds)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <p className="text-xs text-content-dim mt-4">
