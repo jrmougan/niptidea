@@ -243,7 +243,7 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
   });
 
   return (
-    <div className="flex flex-col bg-bg-primary" style={{ height: appHeight, paddingTop: headerHeight }}>
+    <div className="flex flex-col bg-bg-primary fixed inset-x-0 top-0" style={{ height: appHeight, paddingTop: headerHeight }}>
       <div className="scanlines fixed inset-0 z-0 pointer-events-none" />
 
       {/* Header */}
