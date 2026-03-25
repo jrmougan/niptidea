@@ -32,7 +32,7 @@ export const DEFAULT_DIFFICULTY = "facil" as const;
 
 
 /** OpenRouter model ID used for concept generation and chat */
-export const AI_MODEL = "google/gemini-3-flash-preview";
+export const AI_MODEL = "openrouter/auto";
 
 /** Seconds at which the AI injects a taunt into the chat */
 export const TAUNT_THRESHOLDS: { seconds: number; message: string }[] = [
