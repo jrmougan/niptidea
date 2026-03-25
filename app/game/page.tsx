@@ -49,8 +49,6 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [idleSeconds, setIdleSeconds] = useState(0);
   const [appHeight, setAppHeight] = useState("100dvh");
-  const [headerHeight, setHeaderHeight] = useState(0);
-  const headerRef = useRef<HTMLElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const startedRef = useRef(false);
@@ -118,9 +116,14 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
   // Cleanup timer on unmount
   useEffect(() => () => stopTimer(), []);
 
-  // Set initial values before first paint to avoid flash on Safari
+  // Lock body scroll to prevent iOS Safari from scrolling behind keyboard
+  useEffect(() => {
+    document.documentElement.classList.add("game-active");
+    return () => document.documentElement.classList.remove("game-active");
+  }, []);
+
+  // Set initial height before first paint
   useLayoutEffect(() => {
-    setHeaderHeight(headerRef.current?.offsetHeight ?? 0);
     if (window.visualViewport) setAppHeight(`${window.visualViewport.height}px`);
   }, []);
 
@@ -243,11 +246,11 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
   });
 
   return (
-    <div className="flex flex-col bg-bg-primary fixed inset-x-0 top-0" style={{ height: appHeight, paddingTop: headerHeight }}>
+    <div className="flex flex-col bg-bg-primary fixed inset-x-0 top-0 overflow-hidden" style={{ height: appHeight }}>
       <div className="scanlines fixed inset-0 z-0 pointer-events-none" />
 
       {/* Header */}
-      <header ref={headerRef} className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-3 border-b border-border-default bg-bg-primary">
+      <header className="relative z-10 flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-border-default bg-bg-primary">
         <Link href="/" className="text-accent-orange font-bold text-sm tracking-wide text-glow-orange">
           NiP_t<span className="text-accent-teal [text-shadow:none]">aI</span>dea
         </Link>
