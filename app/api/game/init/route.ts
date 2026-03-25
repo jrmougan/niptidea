@@ -38,15 +38,25 @@ export async function POST(req: Request): Promise<Response> {
     ? `\nConceptos ya vistos que NO puedes usar ni similares: ${seenConcepts.join(", ")}.`
     : "";
 
+  // Random seeds to break LLM bias toward "canonical" concepts
+  const seed = Math.floor(Math.random() * 10000);
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const startLetter = letters[Math.floor(Math.random() * letters.length)];
+  const regions = ["Europa", "Asia", "América Latina", "África", "Norteamérica", "Oceanía", "Oriente Medio"];
+  const region = regions[Math.floor(Math.random() * regions.length)];
+
   const { text } = await generateText({
     model: openrouter(AI_MODEL),
-    temperature: 1.1,
+    temperature: 1.3,
     prompt: `Eres el motor de un juego de adivinanzas para público hispanohablante.
 Dificultad: ${difficultyPrompt}
 Categoría: ${category} (${CATEGORIES[category].description})${avoidClause}
 
-Elige UN concepto concreto de esa categoría. Sé creativo e impredecible, con variedad geográfica, temporal y temática. Evita los más obvios y populares.
-Responde ÚNICAMENTE con el nombre canónico del concepto, sin explicaciones ni puntuación extra. Ejemplos: "Frida Kahlo", "Telescopio", "Entropía".`,
+Semilla interna: ${seed}. Usa esta semilla para guiar tu elección de forma impredecible.
+Preferencia: conceptos cuyo nombre empiece por "${startLetter}" o relacionados con ${region} (no obligatorio, solo como guía de variedad).
+
+Elige UN concepto concreto de esa categoría. NUNCA elijas los más típicos u obvios. Sorpréndeme.
+Responde ÚNICAMENTE con el nombre canónico del concepto, sin explicaciones ni puntuación extra.`,
   });
 
   const concept = text.trim().replace(/^["']|["']$/g, "");
