@@ -3,7 +3,7 @@ import "./globals.css";
 import { MAX_ATTEMPTS } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "NiP_taIdea — ¿Puedes adivinar lo que piensa la IA?",
+  title: "NiPtAIdea — ¿Puedes adivinar lo que piensa la IA?",
   description: `Juego de adivinanza con IA sarcástica. Tienes ${MAX_ATTEMPTS} preguntas para descubrir el concepto secreto.`,
 };
 

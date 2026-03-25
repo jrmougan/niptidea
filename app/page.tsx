@@ -58,10 +58,10 @@ export default async function Home() {
         {/* Title */}
         <div className="flex flex-col gap-2">
           <h1 className="text-5xl font-bold tracking-tight text-accent-orange neon-flicker">
-            NiP_t<span className="text-accent-teal [text-shadow:none]">aI</span>dea
+            NiPt<span className="text-accent-teal [text-shadow:none]">AI</span>dea
           </h1>
           <p className="text-sm text-content-muted font-mono tracking-widest">
-            // Akinator te encontraba. NiP_t<span className="text-accent-teal">aI</span>dea te humilla.
+            // Akinator te encontraba. NiPt<span className="text-accent-teal">AI</span>dea te humilla.
           </p>
         </div>
 
@@ -149,7 +149,7 @@ export default async function Home() {
         </div>
 
         <p className="text-xs text-content-dim mt-4">
-          © NiP_taIdea — powered by {AI_MODEL}
+          © NiPtAIdea — powered by {AI_MODEL}
         </p>
       </div>
     </main>

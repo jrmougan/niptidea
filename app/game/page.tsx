@@ -246,7 +246,7 @@ function GameSession({ onRestart, token, category, difficulty }: { onRestart: ()
       {/* Header */}
       <header className="relative z-10 flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-border-default bg-bg-primary">
         <Link href="/" className="text-accent-orange font-bold text-sm tracking-wide text-glow-orange">
-          NiP_t<span className="text-accent-teal [text-shadow:none]">aI</span>dea
+          NiPt<span className="text-accent-teal [text-shadow:none]">AI</span>dea
         </Link>
 
         <div className="flex items-center gap-4 text-xs font-mono text-content-muted">
@@ -419,7 +419,7 @@ export default function GamePage() {
           {/* Logo */}
           <div className="flex flex-col items-center gap-1">
             <h1 className="text-2xl font-bold text-accent-orange neon-flicker tracking-wide">
-              NiP_t<span className="text-accent-teal [text-shadow:none]">aI</span>dea
+              NiPt<span className="text-accent-teal [text-shadow:none]">AI</span>dea
             </h1>
             <p className="text-[11px] text-content-dim tracking-[0.25em]">// select_category</p>
           </div>
