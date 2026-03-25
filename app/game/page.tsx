@@ -218,7 +218,7 @@ function GameSession({ onRestart, token, category }: { onRestart: () => void; to
   });
 
   return (
-    <div className="flex flex-col h-screen bg-bg-primary">
+    <div className="flex flex-col h-[100dvh] bg-bg-primary">
       <div className="scanlines fixed inset-0 z-0 pointer-events-none" />
 
       {/* Header */}
@@ -374,7 +374,7 @@ export default function GamePage() {
 
   if (!session) {
     return (
-      <div className="flex h-screen items-center justify-center bg-bg-primary">
+      <div className="flex h-[100dvh] items-center justify-center bg-bg-primary">
         <div className="scanlines fixed inset-0 z-0 pointer-events-none" />
         <div className="flex flex-col items-center gap-6 font-mono text-center px-4">
           <div className="w-16 h-16 rounded-full border border-accent-teal/40 bg-bg-secondary text-accent-teal brain-pulse flex items-center justify-center">

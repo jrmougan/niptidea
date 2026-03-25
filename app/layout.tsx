@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { MAX_ATTEMPTS } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "NiP_taIdea — ¿Puedes adivinar lo que piensa la IA?",
   description: `Juego de adivinanza con IA sarcástica. Tienes ${MAX_ATTEMPTS} preguntas para descubrir el concepto secreto.`,
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
