@@ -11,8 +11,7 @@ interface ResultScreenProps {
   concept: string;
   attemptsUsed: number;
   timeSeconds: number;
-  onRestart: () => void;   // header restart (resets pool)
-  onContinue: () => void;  // "jugar de nuevo" (keeps pool)
+  onRestart: () => void;
 }
 
 export default function ResultScreen({
@@ -21,7 +20,6 @@ export default function ResultScreen({
   attemptsUsed,
   timeSeconds,
   onRestart,
-  onContinue,
 }: ResultScreenProps) {
   const isWin = result === "win";
   const [name, setName] = useState("");
@@ -171,7 +169,7 @@ export default function ResultScreen({
         {/* Actions */}
         <div className="flex gap-3 w-full">
           <button
-            onClick={onContinue}
+            onClick={onRestart}
             className="flex-1 py-3 bg-accent-orange text-bg-primary text-sm font-bold font-mono tracking-wider hover:bg-accent-orange-hover transition-colors"
           >
             <LuRefreshCw size={14} className="inline mr-2" />jugar_de_nuevo()

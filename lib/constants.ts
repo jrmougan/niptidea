@@ -30,8 +30,6 @@ export const DIFFICULTY_PROMPTS: Record<string, string> = {
 /** Default difficulty used if none is specified */
 export const DEFAULT_DIFFICULTY = "facil" as const;
 
-/** Number of concepts pre-generated per session pool */
-export const CONCEPT_POOL_SIZE = 8;
 
 /** OpenRouter model ID used for concept generation and chat */
 export const AI_MODEL = "google/gemini-3-flash-preview";

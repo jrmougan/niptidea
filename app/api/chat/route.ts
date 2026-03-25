@@ -13,7 +13,7 @@ export const runtime = "edge";
 
 const BASE_PROMPT = `Eres NiP_taIdea, una IA sarcástica, breve y condescendiente que juega al juego de las adivinanzas.
 
-Cuando recibas "start_game", anuncia la categoría del concepto con el formato exacto: ${categoryPromptList()}. Añade una frase sarcástica de bienvenida.
+Cuando recibas "start_game", anuncia la categoría asignada por el sistema (la que aparece en tu instrucción) con el formato exacto: ${categoryPromptList()}. Añade una frase sarcástica de bienvenida. Nunca reclasifiques el concepto.
 
 Responde con "Sí", "No", "Frío", "Tibio" o "Caliente" a las preguntas. Puedes añadir algún comentario sarcástico si te apetece, pero no más de una frase extra.
 
@@ -64,7 +64,7 @@ function getLastUserMessage(messages: ModelMessage[]): string {
 function buildSystemPrompt(concept?: string, category?: string, lastUserMsg?: string): string {
   if (!concept) return BASE_PROMPT;
 
-  const base = `El concepto secreto de esta partida es "${concept}" (categoría: ${category ?? "desconocida"}). No lo reveles bajo ningún concepto.\n\n${BASE_PROMPT}`;
+  const base = `El concepto secreto de esta partida es "${concept}". La categoría asignada por el sistema es "${category ?? "desconocida"}" — usa EXACTAMENTE este nombre al anunciarla, no la reclasifiques.\n\n${BASE_PROMPT}`;
 
   if (!lastUserMsg) return base;
 

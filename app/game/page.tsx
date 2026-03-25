@@ -35,7 +35,7 @@ async function fetchGameResponse(
   return res.text();
 }
 
-function GameSession({ onRestart, onContinue, token, category }: { onRestart: () => void; onContinue: () => void; token: string; category: string }) {
+function GameSession({ onRestart, token, category }: { onRestart: () => void; token: string; category: string }) {
   const transport = useMemo(
     () => new TextStreamChatTransport({ api: "/api/chat", body: { token } }),
     [token],
@@ -207,7 +207,6 @@ function GameSession({ onRestart, onContinue, token, category }: { onRestart: ()
         attemptsUsed={MAX_ATTEMPTS - attempts}
         timeSeconds={finalTimeRef.current}
         onRestart={onRestart}
-        onContinue={onContinue}
       />
     );
   }
@@ -338,56 +337,16 @@ function GameSession({ onRestart, onContinue, token, category }: { onRestart: ()
   );
 }
 
-const POOL_KEY = "niptaidea_pool";
-const USED_KEY = "niptaidea_used";
-
-type PoolEntry = { category: string; token: string; concept: string };
-
-function getPool(): PoolEntry[] {
-  try { return JSON.parse(sessionStorage.getItem(POOL_KEY) ?? "[]"); } catch { return []; }
-}
-
-function savePool(pool: PoolEntry[]) {
-  try { sessionStorage.setItem(POOL_KEY, JSON.stringify(pool)); } catch {}
-}
-
-function getUsedConcepts(): string[] {
-  try { return JSON.parse(sessionStorage.getItem(USED_KEY) ?? "[]"); } catch { return []; }
-}
-
-function addUsedConcepts(concepts: string[]) {
-  try {
-    const prev = getUsedConcepts();
-    sessionStorage.setItem(USED_KEY, JSON.stringify([...prev, ...concepts]));
-  } catch {}
-}
-
 async function initGame(): Promise<{ token: string; category: string }> {
-  let pool = getPool();
-
-  if (pool.length === 0) {
-    const r = await fetch("/api/game/init", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usedConcepts: getUsedConcepts() }),
-    });
-    const data = await r.json();
-    pool = Array.isArray(data.pool) ? data.pool : [];
-    console.log("Concept pool:", pool.map((e) => `${e.concept} (${e.category})`));
-    addUsedConcepts(pool.map((e) => e.concept));
-    savePool(pool);
-  }
-
-  const [entry, ...rest] = pool;
-  savePool(rest);
-  return { token: entry?.token ?? "", category: entry?.category ?? "" };
+  const r = await fetch("/api/game/init", { method: "POST" });
+  const data = await r.json();
+  return { token: data.token ?? "", category: data.category ?? "" };
 }
 
 export default function GamePage() {
   const [session, setSession] = useState<{ key: number; token: string; category: string } | null>(null);
 
   useEffect(() => {
-    savePool([]);
     initGame()
       .then(({ token, category }) => setSession({ key: 0, token, category }))
       .catch(() => setSession({ key: 0, token: "", category: "" }));
@@ -412,17 +371,7 @@ export default function GamePage() {
     );
   }
 
-  // Full reset: clears pool (header restart or fresh navigation)
   const handleRestart = () => {
-    savePool([]);
-    setSession(null);
-    initGame()
-      .then(({ token, category }) => setSession((s) => ({ key: (s?.key ?? 0) + 1, token, category })))
-      .catch(() => setSession((s) => ({ key: (s?.key ?? 0) + 1, token: "", category: "" })));
-  };
-
-  // Continue: consumes next concept from pool (ResultScreen "jugar de nuevo")
-  const handleContinue = () => {
     setSession(null);
     initGame()
       .then(({ token, category }) => setSession((s) => ({ key: (s?.key ?? 0) + 1, token, category })))
@@ -435,7 +384,6 @@ export default function GamePage() {
       token={session.token}
       category={session.category}
       onRestart={handleRestart}
-      onContinue={handleContinue}
     />
   );
 }
