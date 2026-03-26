@@ -56,7 +56,7 @@ export const MAX_GAMES_PER_WINDOW = 30;
 export const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 /** OpenRouter model ID used for concept generation and chat */
-export const AI_MODEL = "google/gemini-2.5-flash";
+export const AI_MODEL = "google/gemini-3.1-flash-lite-preview";
 
 /** Seconds at which the AI injects a taunt into the chat */
 export const TAUNT_THRESHOLDS: { seconds: number; message: string }[] = [
