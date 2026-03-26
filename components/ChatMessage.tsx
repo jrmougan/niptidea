@@ -9,7 +9,7 @@ interface ChatMessageProps {
 export default function ChatMessage({ message }: ChatMessageProps) {
   const isAI = message.role === "assistant";
   const raw = getMessageText(message);
-  const text = raw.replace(/CATEGOR[ÍI]A:\s*\w+[.\s]*/gi, "").trim();
+  const text = raw.replace(/CATEGOR[ÍI]A:\s*[^\s.,!?]+[.\s]*/gi, "").trim();
 
   if (!text) return null;
 

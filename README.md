@@ -23,6 +23,7 @@ Juego de adivinanza con IA sarcástica. La IA piensa en un concepto secreto y t�
 | Streaming | Vercel AI SDK v6 (`useChat`, `streamText`) |
 | Base de datos | SQLite (`better-sqlite3`) |
 | Despliegue | Docker + Coolify |
+| Analíticas | Umami (self-hosted) |
 
 ## Estructura
 
@@ -103,3 +104,5 @@ El volumen en `/app/data` persiste la base de datos entre reinicios.
 **Taunts automáticos** — Si el jugador lleva 60, 120, 180 o 240 segundos sin escribir, la IA inyecta un mensaje de burla automáticamente.
 
 **Scoreboard por dificultad** — Top 10 independiente por cada nivel de dificultad, ordenado por intentos (ascendente) y luego por tiempo. La landing muestra el top 3 de cada dificultad en paralelo. Si el marcador está lleno y la nueva puntuación es peor que la última, se descarta.
+
+**Analíticas con Umami** — Se usa Umami (self-hosted) para registrar eventos de juego sin almacenar datos personales. Los eventos trackeados incluyen: inicio de partida por categoría y dificultad, aciertos (`game_win`) y fallos (`game_lose`) con los intentos usados, solicitudes de pista, y puntuaciones guardadas en el scoreboard. Permite analizar qué categorías resultan más difíciles, la tasa de acierto por dificultad y el uso de pistas.
