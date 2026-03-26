@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { LuBrain, LuSend, LuTimer, LuClapperboard, LuTv, LuMusic, LuUsers, LuGlobe, LuPawPrint, LuUtensils, LuShuffle, LuCircleHelp, LuMessageCircle, LuTarget, LuChevronDown, LuChevronUp } from "react-icons/lu";
+import { LuBrain, LuSend, LuTimer, LuClapperboard, LuTv, LuMusic, LuUsers, LuGlobe, LuPawPrint, LuUtensils, LuShuffle, LuCircleHelp, LuMessageCircle, LuTarget, LuChevronDown, LuChevronUp, LuMapPin } from "react-icons/lu";
 import type { IconType } from "react-icons";
 import ChatMessage from "@/components/ChatMessage";
 import ResultScreen from "@/components/ResultScreen";
@@ -42,6 +42,7 @@ const CATEGORY_ICONS: Record<string, IconType> = {
   país:      LuGlobe,
   animal:    LuPawPrint,
   plato:     LuUtensils,
+  lugar:     LuMapPin,
 };
 
 
@@ -389,24 +390,26 @@ function GameSession({ onRestart, token, category, difficulty }: { onRestart: ()
   );
 }
 
-async function initGame(category?: string, difficulty?: string): Promise<{ token: string; category: string }> {
+async function initGame(category?: string, subcategory?: string, difficulty?: string): Promise<{ token: string; category: string; subcategory?: string }> {
   const r = await fetch("/api/game/init", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       seenConcepts: getSeenConcepts(),
       ...(category && { category }),
+      ...(subcategory && { subcategory }),
       ...(difficulty && { difficulty }),
     }),
   });
   const data = await r.json();
-  return { token: data.token ?? "", category: data.category ?? "" };
+  return { token: data.token ?? "", category: data.category ?? "", subcategory: data.subcategory };
 }
 
 const RANDOM_CATEGORY = "__random__";
 
 export default function GamePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState("medio");
   const [loading, setLoading] = useState(false);
   const [session, setSession] = useState<{ key: number; token: string; category: string; difficulty: string } | null>(null);
@@ -430,9 +433,10 @@ export default function GamePage() {
   const startGame = () => {
     setLoading(true);
     const categoryArg = selectedCategory && selectedCategory !== RANDOM_CATEGORY ? selectedCategory : undefined;
-    initGame(categoryArg, selectedDifficulty)
-      .then(({ token, category }) =>
-        setSession((s) => ({ key: (s?.key ?? 0) + 1, token, category, difficulty: selectedDifficulty }))
+    const subcategoryArg = categoryArg && selectedSubcategory ? selectedSubcategory : undefined;
+    initGame(categoryArg, subcategoryArg, selectedDifficulty)
+      .then(({ token, category, subcategory }) =>
+        setSession((s) => ({ key: (s?.key ?? 0) + 1, token, category: subcategory ? `${category} › ${subcategory}` : category, difficulty: selectedDifficulty }))
       )
       .catch(() =>
         setSession((s) => ({ key: (s?.key ?? 0) + 1, token: "", category: "", difficulty: selectedDifficulty }))
@@ -578,7 +582,7 @@ export default function GamePage() {
               return (
                 <button
                   key={name}
-                  onClick={() => setSelectedCategory(isSelected ? null : name)}
+                  onClick={() => { setSelectedCategory(isSelected ? null : name); setSelectedSubcategory(null); }}
                   className={`flex flex-col items-center gap-2 px-2 py-3 border transition-all ${
                     isSelected
                       ? "border-accent-orange bg-accent-orange/10 text-accent-orange"
@@ -592,8 +596,8 @@ export default function GamePage() {
             })}
             {/* Sorpréndeme — ocupa el espacio restante en la última fila */}
             <button
-              onClick={() => setSelectedCategory(selectedCategory === RANDOM_CATEGORY ? null : RANDOM_CATEGORY)}
-              className={`col-span-3 flex items-center justify-center gap-2 px-3 py-3 border transition-all text-xs tracking-wider ${
+              onClick={() => { setSelectedCategory(selectedCategory === RANDOM_CATEGORY ? null : RANDOM_CATEGORY); setSelectedSubcategory(null); }}
+              className={`col-span-4 flex items-center justify-center gap-2 px-3 py-3 border transition-all text-xs tracking-wider ${
                 selectedCategory === RANDOM_CATEGORY
                   ? "border-accent-orange bg-accent-orange/10 text-accent-orange"
                   : "border-border-default bg-bg-secondary text-content-muted hover:text-content-primary"
@@ -603,6 +607,28 @@ export default function GamePage() {
               Sorpréndeme
             </button>
           </div>
+
+          {/* Subcategory chips — only when the selected category has subcategories */}
+          {selectedCategory && selectedCategory !== RANDOM_CATEGORY && CATEGORIES[selectedCategory]?.subcategories && (
+            <div className="w-full flex flex-col gap-2">
+              <p className="text-[11px] text-content-dim tracking-[0.25em]">// subcategory <span className="text-content-dim/50">(opcional)</span></p>
+              <div className="flex flex-wrap gap-2">
+                {Object.keys(CATEGORIES[selectedCategory].subcategories!).map((sub) => (
+                  <button
+                    key={sub}
+                    onClick={() => setSelectedSubcategory(selectedSubcategory === sub ? null : sub)}
+                    className={`px-3 py-1.5 border text-[10px] tracking-wider uppercase transition-all ${
+                      selectedSubcategory === sub
+                        ? "border-accent-teal bg-accent-teal/10 text-accent-teal"
+                        : "border-border-default bg-bg-secondary text-content-muted hover:text-content-primary"
+                    }`}
+                  >
+                    {sub}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Difficulty */}
           <div className="w-full flex flex-col gap-3">
@@ -631,7 +657,7 @@ export default function GamePage() {
             disabled={!selectedCategory}
             className="w-full py-3 bg-accent-orange text-bg-primary text-sm font-bold tracking-wider disabled:opacity-30 hover:bg-accent-orange-hover transition-colors"
           >
-            {`> start_game(${!selectedCategory || selectedCategory === RANDOM_CATEGORY ? "random" : selectedCategory.toLowerCase()}, ${selectedDifficulty})`}
+            {`> start_game(${!selectedCategory || selectedCategory === RANDOM_CATEGORY ? "random" : selectedCategory.toLowerCase()}${selectedSubcategory ? `›${selectedSubcategory.toLowerCase()}` : ""}, ${selectedDifficulty})`}
           </button>
         </div>
       </div>

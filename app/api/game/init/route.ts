@@ -34,6 +34,11 @@ export async function POST(req: Request): Promise<Response> {
     ? body.category
     : null;
   const category = requestedCategory ?? pickCategory();
+  const requestedSubcategory = typeof body.subcategory === "string"
+    && requestedCategory !== null
+    && CATEGORIES[requestedCategory]?.subcategories?.[body.subcategory] !== undefined
+    ? body.subcategory as string
+    : null;
 
   const avoidClause = seenConcepts.length > 0
     ? `\nConceptos ya vistos que NO puedes usar ni similares: ${seenConcepts.join(", ")}.`
@@ -46,12 +51,17 @@ export async function POST(req: Request): Promise<Response> {
   const regions = ["Europa", "Asia", "América Latina", "África", "Norteamérica", "Oceanía", "Oriente Medio"];
   const region = regions[Math.floor(Math.random() * regions.length)];
 
+  const categoryDescription = requestedSubcategory
+    ? CATEGORIES[category].subcategories![requestedSubcategory]
+    : CATEGORIES[category].description;
+  const categoryLabel = requestedSubcategory ? `${category} › ${requestedSubcategory}` : category;
+
   const { text } = await generateText({
     model: openrouter(AI_MODEL),
     temperature: 1.3,
     prompt: `Eres el motor de un juego de adivinanzas para público hispanohablante.
 Dificultad: ${difficultyPrompt}
-Categoría: ${category} (${CATEGORIES[category].description})${avoidClause}
+Categoría: ${categoryLabel} (${categoryDescription})${avoidClause}
 
 Semilla interna: ${seed}. Usa esta semilla para guiar tu elección de forma impredecible.
 Preferencia: conceptos cuyo nombre empiece por "${startLetter}" o relacionados con ${region} (no obligatorio, solo como guía de variedad).
@@ -63,5 +73,5 @@ Responde ÚNICAMENTE con el nombre canónico del concepto, sin explicaciones ni 
   const concept = text.trim().replace(/^["']|["']$/g, "");
 
   const token = await encryptConcept({ concept, category });
-  return Response.json({ category, token });
+  return Response.json({ category, subcategory: requestedSubcategory ?? undefined, token });
 }
