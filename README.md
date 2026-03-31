@@ -8,7 +8,15 @@ Juego de adivinanza con IA sarcástica. La IA piensa en un concepto secreto y t�
 
 ## Capturas
 
-<!-- Añade aquí capturas o GIFs del juego -->
+| Home | Selección de categoría |
+|---|---|
+| ![Home](docs/images/home.png) | ![Selección de categoría](docs/images/select-category.png) |
+
+| Partida en curso | Victoria |
+|---|---|
+| ![Partida](docs/images/game.png) | ![Victoria](docs/images/win.png) |
+
+![Clasificación](docs/images/leaderboard.png)
 
 ## Cómo funciona
 
